@@ -17,7 +17,7 @@
 		JSON::parse(json_encode([ "m" => $m, "p" => [ "r" => $r ] ]));	
 	}else{
 
-		if(!$user) {
+		if(!$u) {
 		 	JSON::parse(json_encode([ "m" => "db.Authorization", "p" => [] ]));
 		} else {
 			JSON::parse(json_encode([ "m" => "db.START", "p" => [] ]));
