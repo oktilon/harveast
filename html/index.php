@@ -5,7 +5,6 @@
 		die;
 	}
 	require_once 'sess.inc';
-	session_start();
 
  	ini_set('zip.output_compression_level', 9);
 	ob_start('ob_gzhandler');
