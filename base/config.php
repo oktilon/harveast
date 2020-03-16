@@ -15,3 +15,4 @@ define('PG_PWD',     		'in7)(%s=qOt');
 
 define('WORK_FOLDER',     	'.');
 define('TABLE_RIGHTS',     	'spr_users_rights');
+//
