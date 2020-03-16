@@ -1,2 +1,2 @@
-# oktilon-gmail.com
-harveast
+# Harveast
+Проект ресурса дла Харвист
