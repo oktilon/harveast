@@ -1,5 +1,5 @@
 <?php 
-require_once '../sess.inc';
+require_once '../sess.php';
 session_start();
 
 if(!isset($_POST['obj'])){

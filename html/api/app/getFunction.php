@@ -1,5 +1,5 @@
 <?php 
-	require_once '../sess.inc';
+	require_once '../sess.php';
 
 	$user_id = 0;
 	if(isset($_SESSION['user'])){
@@ -16,7 +16,7 @@
 		$DB->prepare("
 			SELECT *,
 					UNIX_TIMESTAMP(dt_update) as dt 
-			FROM kernel_spr_modules 
+			FROM hrv_spr_modules 
 			WHERE 	module = :module  OR 
 					module = md5(:module) 
 			ORDER BY id 
@@ -28,7 +28,7 @@
 		$DB->prepare("
 			SELECT 	*,
 					UNIX_TIMESTAMP(dt_update) as dt 
-			FROM 	kernel_spr_modules 
+			FROM 	hrv_spr_modules 
 			WHERE 	(module = :module  OR module = md5(:module)) AND 
 					TRIM(dm_roles) = '999999'
 			ORDER BY id 

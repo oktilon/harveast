@@ -1,10 +1,11 @@
 <?php
 	
-	if(!file_exists('sess.inc') ){
-		echo json_decode(["status"=>"error"]);
+	if(!file_exists('sess.php') ){
+		header("Content-type: application/json; charset=utf-8");
+		echo json_encode(["status"=>"error"]);
 		die;
 	}
-	require_once 'sess.inc';
+	require_once 'sess.php';
 
  	ini_set('zip.output_compression_level', 9);
 	ob_start('ob_gzhandler');

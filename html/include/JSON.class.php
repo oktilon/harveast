@@ -39,14 +39,14 @@
 				if($user_id>0){
 					$DB->prepare("
 						SELECT 	* 
-						FROM 	kernel_spr_modules 
+						FROM 	hrv_spr_modules 
 						WHERE 	(module = :module OR module = md5(:module)) AND `type` = 2 
 						ORDER BY id DESC LIMIT 1
 					");
 				}else{
 					$DB->prepare("
 						SELECT 	* 
-						FROM 	kernel_spr_modules 
+						FROM 	hrv_spr_modules 
 						WHERE 	((module = :module OR module = md5(:module)) AND `type` = 2)AND 
 								TRIM(dm_roles) = '999999' 
 						ORDER BY id DESC LIMIT 1

@@ -270,6 +270,7 @@ class connect_db {
     }
 
     public function getList($flt = [], $ord = '', $tbl = 'COLUMNS') {
+        global $DB;
         $ret = [];
         $par = [];
         $add = [];
@@ -277,11 +278,14 @@ class connect_db {
         foreach($flt as $it) {
             if(is_array($it)) {
                 $rule = array_shift($it);
-                switch($rule) {
-                    case 'fields': $fld = $it; continue;
-                    case 'this_schema': $rule = 'TABLE_SCHEMA = :ts'; $it = ['ts', $this->db_name]; break;
+                if($rule == 'fields') {
+                    $fld = $it;
+                    continue;
+                } elseif($rule == 'this_schema') {
+                    $rule = 'TABLE_SCHEMA = :ts';
+                    $it = ['ts', $this->db_name];
                 }
-                $add[] = $rule;
+                if($rule) $add[] = $rule;
                 $par[$it[0]] = $it[1];
             } else {
                 $add[] = $it;
