@@ -1,11 +1,9 @@
 <?php
 require_once '../../sess.php';
-session_start();
+  
+$obj = json_encode($_REQUEST);
+$DB->prepare("INSERT INTO st_buffer_1c SET obj=:obj");
+$DB->bind("obj",$obj);
+$DB->execute();
 
-if(!isset($_POST['obj'])){
-	echo json_encode(["status"=>"error"]);
-	die;
-}
-
-$obj = json_decode($_POST['obj']);
-JSON::parse($_POST['obj']);
+echo json_encode($_REQUEST);
