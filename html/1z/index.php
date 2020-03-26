@@ -1,8 +1,12 @@
 <?php
 	require_once '../sess.php';
-	$obj = json_encode($_REQUEST);
-	$DB->prepare("INSERT INTO st_buffer_1c SET obj=:obj");
-	$DB->bind("obj",$obj);
+	if(!isset($_POST['obj'])) die;
+	
+	$txt = json_encode($_POST);
+
+	$DB->prepare("INSERT INTO st_buffer_1c SET obj=:obj,txt=:txt");
+	$DB->bind("obj",$_POST['obj']);
+	$DB->bind("txt",$txt);
 	$q=$DB->execute();
 
 	if($q){
