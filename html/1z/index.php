@@ -1,6 +1,9 @@
 <?php
 	require_once '../sess.php';
-	if(!isset($_POST['obj'])) die;
+	if(!isset($_POST['obj'])){
+		echo json_encode(["status"=>"error","obj"=>"???"]);
+		die;
+	}
 	
 	$txt = json_encode($_POST);
 
@@ -12,5 +15,5 @@
 	if($q){
 		echo json_encode(["status"=>"ok"]);
 	}else{
-		echo json_encode(["status"=>"error"]);
+		echo json_encode(["status"=>"error","err"=>"insert false"]);
 	}
