@@ -1,3 +1,9 @@
+window.addEventListener('error', function(e) {
+    console.log(e.message
+        , '\n', e.filename, ':', e.lineno, (e.colno ? ':' + e.colno : '')
+        , e.error && e.error.stack ? '\n' : '', e.error ? e.error.stack : undefined
+    );
+}, false);
 
 function BeforeOpenTables(){
     if (window.openDatabase) {
@@ -97,8 +103,13 @@ function ExecF(name = "", param = "", laucher = "") {
                     }
 
                     if(data.data==="")data.data = _fn;
-                    eval(_name + " = " + decodeURIComponent(escape(window.atob(data.data))));
-                    "" === param ? window[_name]() : window[_name](param);
+                    // try {
+                        eval(_name + " = " + decodeURIComponent(escape(window.atob(data.data))));
+                        "" === param ? window[_name]() : window[_name](param);
+                    // }catch(e){
+
+                    // }
+                    
 
                 }else{
                 	 console.log("Функция: '" + name + "' не найдена");

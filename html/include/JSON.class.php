@@ -13,13 +13,16 @@
 				SET ip 		= :ip,
 					module 	= :module,
 					user_id = :user_id,
-					status  = :status
+					status  = :status,
+					`request`=:request
 			");
 			$DB->bind("module",	$module);
 			$DB->bind("user_id",$user_id);
 			$DB->bind("status",	$status);
-			$DB->bind("ip",		 $_SERVER['REMOTE_ADDR']);
-			$q = $DB->execute();
+			$DB->bind("request",json_encode($_REQUEST));
+			$DB->bind("ip",		$_SERVER['REMOTE_ADDR']);
+			$DB->execute();
+			return $DB->lastInsertId();
 		}
 
 		 
@@ -84,15 +87,37 @@
 					}
 					
 
-					JSON::log_server($obj->m,$user_id,"ok");
+					$log_id =  JSON::log_server($obj->m,$user_id,"ok");
 
 					$fn = $q[0]['function'];
 					if(isset($obj->p)){
-						$ExecF[$obj->m] = create_function('$p',$fn);
-						return $ExecF[$obj->m]($obj->p);
+
+						try {
+							$ExecF[$obj->m] = create_function('$p',$fn);
+							return $ExecF[$obj->m]($obj->p);
+						} catch (ParseError $p) {
+						    $err = $p->getMessage();
+							$DB->prepare("UPDATE wx_server_log SET err=:err WHERE id=:id;");
+							$DB->bind("err",$err);
+							$DB->bind("id" ,$log_id);
+							$DB->execute();
+						    echo json_encode(["status"=>"error","err"=>$err]);
+						}
+
 					}else{
-						$ExecF[$obj->m] = create_function(''  ,$fn);
-						return $ExecF[$obj->m]();
+
+						try {
+							$ExecF[$obj->m] = create_function(''  ,$fn);
+							return $ExecF[$obj->m]();
+						} catch (ParseError $p) {
+							$err = $p->getMessage();
+							$DB->prepare("UPDATE wx_server_log SET err=:err WHERE id=:id;");
+							$DB->bind("err",$err);
+							$DB->bind("id" ,$log_id);
+							$DB->execute();
+						    echo json_encode(["status"=>"error","err"=>$err]);
+						}
+
 					}
 
 				}else{
