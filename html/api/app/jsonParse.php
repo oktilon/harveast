@@ -1,6 +1,5 @@
-<?php 
+<?php
 require_once '../sess.php';
-session_start();
 
 if(!isset($_POST['obj'])){
 	echo json_encode(["status"=>"error"]);
@@ -12,4 +11,4 @@ JSON::parse($_POST['obj']);
 
 
 
-	 
+
