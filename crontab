@@ -1,0 +1,4 @@
+MAILTO = ""
+
+# MIN	HOUR	DAY	MONTH	WEEK	CMD
+0	22	*	*	*	php /var/www/html/public/base/load_wialon_items.php

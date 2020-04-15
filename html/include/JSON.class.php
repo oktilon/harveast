@@ -57,11 +57,11 @@ class JSON
 		try {
 			$fun = create_function('$obj', $fn);
 			$fun([]);
-			JSON::log_server($mdl, $user_id, "ok", "autoload($className)");
+			JSON::log_server($mdl, $user_id, "ok", (object)['autoload' => $className]);
 			return true;
 		} catch (ParseError $p) {
 			$err = $p->getMessage();
-			JSON::log_server($mdl, $user_id, "parser error", "autoload($className)", $err);
+			JSON::log_server($mdl, $user_id, "parser error", (object)['autoload' => $className], $err);
 		}
 		return false;
 	}
