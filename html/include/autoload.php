@@ -6,11 +6,9 @@ function autoloadBase ($className){
         return;
     }
 
-    $ret = JSON::parse(json_encode(["m"=>($className).'.class',"p"=>[]]));
-    if(!$ret) return;
+    if(JSON::loadClass($className)) return;
 
-    $ret = JSON::parse(json_encode(["m"=>strtolower($className).'class',"p"=>[]]));
-    if(!$ret) return;
+    if(JSON::loadClass(strtolower($className))) return;
 
     // Try SplitName by capitals
     $classParts = array('');
@@ -32,8 +30,7 @@ function autoloadBase ($className){
     $clsName = strtolower(implode('_', $classParts));
     $filePath = PATH_INC . DIRECTORY_SEPARATOR . $fl . $clsName . '.class.php';
 
-    $ret = JSON::parse(json_encode(["m"=>$clsName . '.class',"p"=>[]]));
-    if(!$ret) return;
+    if(JSON::loadClass($clsName)) return;
 
     if (file_exists($filePath)) {
         require_once($filePath);

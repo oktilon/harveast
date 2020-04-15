@@ -10,6 +10,7 @@ class connect_db {
     public $bTransaction = false;
     public $addr = '';
     public $db_name = '';
+    public $db_drv = '';
     /** @var PDOStatement */
     public $lastStmt = null;
 
@@ -34,19 +35,37 @@ class connect_db {
             $pwd = $p ? $p : SQL_PWD;
 
             $db_name = $db ? $db : SQL_BASE;
+            $this->db_drv = $driver;
             /*$opt = [
                 PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'UTF8'"
             ];*/
-            $dsn = "$driver:host=$srv;dbname=$db_name;charset=$charset";
+
+            $dsn = "$driver:host=$srv;dbname=$db_name";
+            if($charset) $dsn .= ";charset=$charset";
+
+            if($driver == 'sqlite') {
+                $dsn = "$driver:$h";
+                $usr = null;
+            }
+
             $this->addr = $srv;
             $this->db_name = $db_name;
-            $this->conn = new PDO($dsn, $usr, $pwd, $opt);
+            $this->conn = $usr ? new PDO($dsn, $usr, $pwd, $opt) : new PDO($dsn);
         }
         catch(PDOException $ex) {
             $this->error = $ex->getMessage();
             $this->errno = $ex->getCode();
             $this->trace = $ex->getTraceAsString();
         }
+    }
+
+    public static function PostgreSql($h = NULL, $u = NULL, $p = NULL, $db = NULL) {
+        $srv = $h ? $h : PG_SERVER;
+        $usr = $u ? $u : PG_USER;
+        $pwd = $p ? $p : PG_PWD;
+        $db_name = $db ? $db : PG_BASE;
+        // pgsql:host=localhost;dbname=testdb;
+        return new Database($srv, $usr, $pwd, $db_name, 'pgsql', NULL);
     }
 
     /**
@@ -179,6 +198,11 @@ class connect_db {
         return $ret;
     }
 
+    public static function uuid() {
+        global $DB;
+        return $DB->select_scalar("SELECT uuid()");
+    }
+
     /**
     * Affected by last query rows count
     *
@@ -208,8 +232,7 @@ class connect_db {
     * PDO prepare query
     *
     * @param string Query
-    * @param array Driver options
-    * @return PDOStatement
+    * @return connect_db
     */
     public function prepare($sql) {
         $this->lastStmt = $this->conn->prepare($sql);
@@ -219,13 +242,40 @@ class connect_db {
         return $this;
     }
 
+    public function debug($ob = false) {
+        $ret = '';
+        if($ob) ob_start();
+        $this->lastStmt->debugDumpParams();
+        if($ob) {
+            $ret = ob_get_contents();
+            ob_end_clean();
+        }
+        return $ret;
+    }
+
+    /**
+     * bind Value
+     *
+     * @param string Parameter name
+     * @param any Parameter value
+     * @param number Parameter type, default PDO:PARAM_STR
+     * @return connect_db
+     */
     public function bindValue($par, $val, $type = PDO::PARAM_STR) {
         $this->lastStmt->bindValue($par, $val, $type);
+        $this->params[$par] = $type == PDO::PARAM_INT ? intval($val) : $val;
         return $this;
     }
 
-    public function bind($par, $val) {
-        $type = PDO::PARAM_STR;
+    /**
+     * bind Value
+     *
+     * @param string Parameter name
+     * @param any Parameter value
+     * @param number Parameter type, default PDO:PARAM_STR
+     * @return connect_db
+     */
+    public function bind($par, $val, $type = PDO::PARAM_STR) {
         if(is_integer($val)) $type = PDO::PARAM_INT;
         $this->lastStmt->bindValue($par, $val, $type);
         $this->params[$par] = $type == PDO::PARAM_INT ? intval($val) : $val;
