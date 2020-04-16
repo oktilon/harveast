@@ -14,3 +14,4 @@ MAILTO = ""
 10,25,40,55	*	*	*	*	php /var/www/html/public/base/eval_chessboard.php -p 6
 12,27,42,57	*	*	*	*	php /var/www/html/public/base/eval_chessboard.php -p 7
 14,29,44,59	*	*	*	*	php /var/www/html/public/base/eval_chessboard.php -p 8
+
