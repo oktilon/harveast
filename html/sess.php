@@ -8,11 +8,20 @@
 
     require_once PATH_INC . '/autoload.php';
     $DB = new connect_db();
+    $PG = connect_db::PostgreSql();
 
- 	if(!$DB->valid()) {
-        echo "<h1>Ошибка подключения к БД</h1><h2>{$DB->error}</h2><pre>";
-        print_r($DB->errInfo);
-        die("</pre>");
+ 	if(!$DB->valid() || !$PG->valid()) {
+        if(!$DB->valid()) {
+            echo "<h1>Ошибка подключения к БД {$DB->db_drv}:{$DB->db_name}</h1><h2>{$DB->error}</h2><pre>";
+            print_r($DB->errInfo);
+            echo "</pre>";
+        }
+ 	    if(!$PG->valid()) {
+            echo "<h1>Ошибка подключения к БД {$PG->db_drv}:{$PG->db_name}</h1><h2>{$PG->error}</h2><pre>";
+            print_r($PG->errInfo);
+            echo "</pre>";
+        }
+        die();
     }
 
     $infoPrefix = '';

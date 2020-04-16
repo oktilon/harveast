@@ -5,6 +5,11 @@ function autoloadBase ($className){
         require_once($filePath);
         return;
     }
+    $filePath = PATH_INC. DIRECTORY_SEPARATOR . strtolower($className) . '.class.php';
+    if(file_exists($filePath)) {
+        require_once($filePath);
+        return;
+    }
 
     if(JSON::loadClass($className)) return;
 

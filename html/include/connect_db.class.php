@@ -26,8 +26,9 @@ class connect_db {
     * @param string $db_name Database name
     * @param string $driver PDO driver name
     * @param string $charset Character set
+    * @param string $charset Database schema
     */
-    function  __construct($h = NULL, $u = NULL, $p = NULL, $db = NULL, $driver = 'mysql', $charset = 'UTF8') {
+    function  __construct($h = NULL, $u = NULL, $p = NULL, $db = NULL, $driver = 'mysql', $charset = 'UTF8', $schema = '') {
         try {
             $opt = [];
             $srv = $h ? $h : SQL_SERVER;
@@ -39,8 +40,15 @@ class connect_db {
             /*$opt = [
                 PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'UTF8'"
             ];*/
+            $m = [];
+            $port = 0;
+            if(preg_match('/^(.+):(\d+)$/', $srv, $m)) {
+                $srv = $m[1];
+                $port = intval($m[2]);
+            }
 
             $dsn = "$driver:host=$srv;dbname=$db_name";
+            if($port) $dsn .= ";port=$port";
             if($charset) $dsn .= ";charset=$charset";
 
             if($driver == 'sqlite') {
@@ -51,6 +59,12 @@ class connect_db {
             $this->addr = $srv;
             $this->db_name = $db_name;
             $this->conn = $usr ? new PDO($dsn, $usr, $pwd, $opt) : new PDO($dsn);
+            if($schema && $driver == 'pgsql') {
+                $path = $this->prepare("SHOW search_path;")->execute_scalar();
+                if($path) $path .= ', ';
+                $path .= $schema;
+                $this->prepare("SET search_path TO {$path};")->execute();
+            }
         }
         catch(PDOException $ex) {
             $this->error = $ex->getMessage();
@@ -59,13 +73,14 @@ class connect_db {
         }
     }
 
-    public static function PostgreSql($h = NULL, $u = NULL, $p = NULL, $db = NULL) {
+    public static function PostgreSql($h = NULL, $u = NULL, $p = NULL, $db = NULL, $sch = NULL) {
         $srv = $h ? $h : PG_SERVER;
         $usr = $u ? $u : PG_USER;
         $pwd = $p ? $p : PG_PWD;
         $db_name = $db ? $db : PG_BASE;
+        $db_schema = $sch ? $sch : PG_SCHEMA;
         // pgsql:host=localhost;dbname=testdb;
-        return new Database($srv, $usr, $pwd, $db_name, 'pgsql', NULL);
+        return new connect_db($srv, $usr, $pwd, $db_name, 'pgsql', NULL, $db_schema);
     }
 
     /**
