@@ -59,7 +59,7 @@
                         VALUES FROM ($tm_beg) TO ($tm_end)")
                     ->execute();
 
-            $add = $ok ? 'OK' : $PGC->error;
+            $add = $ok ? 'OK' : $PG->error;
             Info("Create partition {$partition} {$dt_beg}-{$dt_end} ({$tm_beg}-{$tm_end}): {$add}");
         }
     }
