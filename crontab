@@ -6,4 +6,11 @@ MAILTO = ""
 0	3	*	*	*	php /var/www/html/public/base/load_wialon_resources.php
 0	22	*	*	*	php /var/www/html/public/base/load_wialon_items.php
 
-#0	*	*	*	*	php /var/www/html/public/base/eval_chessboard.php -p 1
+0,15,30,45	*	*	*	*	php /var/www/html/public/base/eval_chessboard.php -p 1
+2,17,32,47	*	*	*	*	php /var/www/html/public/base/eval_chessboard.php -p 2
+4,19,34,49	*	*	*	*	php /var/www/html/public/base/eval_chessboard.php -p 3
+6,21,36,51	*	*	*	*	php /var/www/html/public/base/eval_chessboard.php -p 4
+8,23,38,53	*	*	*	*	php /var/www/html/public/base/eval_chessboard.php -p 5
+10,25,40,55	*	*	*	*	php /var/www/html/public/base/eval_chessboard.php -p 6
+12,27,42,57	*	*	*	*	php /var/www/html/public/base/eval_chessboard.php -p 7
+14,29,44,59	*	*	*	*	php /var/www/html/public/base/eval_chessboard.php -p 8
