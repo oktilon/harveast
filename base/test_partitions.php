@@ -4,6 +4,8 @@
     // $init = time();
     // $_REQUEST['obj'] = '{"p":1}';
 
+    $PGA = connect_db::PostgreSql(null, PG_ADMIN, PG_ADMIN_PWD);
+
     $deep = '+1 month';
 
     $args = [];
@@ -47,19 +49,19 @@
     foreach($tables as $tbl) {
         $partition = "{$tbl}_{$part}";
 
-        $q = $PG->prepare("SELECT 1
+        $q = $PGA->prepare("SELECT 1
                         FROM pg_catalog.pg_class
                         WHERE relname = :part")
                 ->bind('part', $partition, PDO::PARAM_STR)
                 ->execute_scalar();
 
         if(!$q) {
-            $ok = $PG->prepare("CREATE TABLE $partition
+            $ok = $PGA->prepare("CREATE TABLE $partition
                         PARTITION OF {$tbl} FOR
                         VALUES FROM ($tm_beg) TO ($tm_end)")
                     ->execute();
 
-            $add = $ok ? 'OK' : $PG->error;
+            $add = $ok ? 'OK' : $PGA->error;
             Info("Create partition {$partition} {$dt_beg}-{$dt_end} ({$tm_beg}-{$tm_end}): {$add}");
         }
     }
