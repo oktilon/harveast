@@ -1,4 +1,9 @@
 MAILTO = ""
 
 # MIN	HOUR	DAY	MONTH	WEEK	CMD
+0	23  	*	*	5	php /var/www/html/public/base/test_partitions.php
+
+0	3	*	*	*	php /var/www/html/public/base/load_wialon_resources.php
 0	22	*	*	*	php /var/www/html/public/base/load_wialon_items.php
+
+#0	*	*	*	*	php /var/www/html/public/base/eval_chessboard.php -p 1
