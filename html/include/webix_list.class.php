@@ -4,21 +4,40 @@ class WebixList {
     public $pos  = 0;
 
     private $cnt = 50;
+    private $ord_cache = '';
 
     private static $cache = [];
     private $filter_raw = null;
     private $filter_obj = null;
     public static $filter_oper_cache = [];
 
-    public function __construct($pos = -1) {
-        $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
-        $this->cnt = isset($_POST['count']) ? intval($_POST['count']) : 50;
-        $this->pos = $pos >= 0 ? $pos : $start;
+    public function __construct($p = false) {
+        $this->pos = isset($_POST['start']) ? intval($_POST['start']) : 0;
+        $this->pos = $p && is_object($p) && property_exists($p, 'start') ? $p->start : $this->pos;
         if($this->pos < 0) $this->pos = 0;
-        $this->filter_raw = new stdClass();
 
+        $this->cnt = isset($_POST['count']) ? intval($_POST['count']) : 50;
+        $this->cnt = $p && is_object($p) && property_exists($p, 'count') ? $p->count : $this->cnt;
+
+        $this->ord_cache = isset($_POST['ord']) ? $_POST['ord'] : '[]';
+        $this->ord_cache = $p && is_object($p) && property_exists($p, 'sort') ? $p->sort : $this->ord_cache;
+        if(is_string($this->ord_cache)) $this->ord_cache = json_decode($this->ord_cache);
+
+        $this->filter_raw = new stdClass();
         $f = isset($_POST['filter']) ? $_POST['filter'] : '{}';
+        $f = $p && is_object($p) && property_exists($p, 'fltr') ? $p->fltr : $f;
         $arr = json_decode($f);
+        if(is_array($arr)) {
+            $obj = new stdClass();
+            foreach($arr as $o) {
+                if(is_object($o)) {
+                    $k = property_exists($o, 'id') ? $o->id : 'unk';
+                    $v = property_exists($o, 'val') ? $o->val : json_encode($o);
+                    $obj->$k = $v;
+                }
+            }
+            $arr = $obj;
+        }
         $this->filter_obj = is_object($arr) ? $arr : new stdClass();
     }
 
@@ -31,7 +50,7 @@ class WebixList {
         return $this->pos ? "{$this->pos},{$this->cnt}" : "{$this->cnt}";
     }
 
-    public function authTest(CUser $u) {
+    public function authTest(User $u) {
         if($u->id > 0) return true;
         $this->status = 'auth';
         return false;
@@ -52,7 +71,7 @@ class WebixList {
 
     public function parseOrder($class, $def = 'id DESC', $ord = '', $alias = []) {
         $ret = [];
-        $o = $ord ? $ord : (isset($_POST['ord']) ? $_POST['ord'] : '[]');
+        $o = $ord ? $ord : (isset($_POST['ord']) ? $_POST['ord'] : $this->ord_cache);
         $arr = json_decode($o);
         if(!is_array($arr)) {
             if(is_object($arr)) {
@@ -201,6 +220,7 @@ class WebixList {
             $ok   = $f_ok;
             switch($flt_pref) {
                 case 'car':
+                case 'car_none':
                 case 'agg':
                     $s_ok = property_exists($this->filter_raw, $flt_oper);
                     $ok   = $f_ok || $s_ok;
@@ -217,9 +237,9 @@ class WebixList {
 
 
                 if(is_callable($flt_pref)) {
-                    //PageManager::debug($flt_val, 'func(flt_val)');
+                    //GlobalMethods::debug($flt_val, 'func(flt_val)');
                     $uf = call_user_func_array($flt_pref, [$flt_val, $flt_oper, $flt_field]);
-                    //PageManager::debug($uf, 'ret');
+                    //GlobalMethods::debug($uf, 'ret');
                     if(is_array($uf)) {
                         $flt_val = array_shift($uf);
                         if($uf) $flt_oper = array_shift($uf);
@@ -246,7 +266,7 @@ class WebixList {
                             $flt_val = [];
                             foreach($arr as $a) {
                                 if($i = intval($a)) {
-                                    if($i == PageManager::EMPTY_ID) $i = 0;
+                                    if($i == GlobalMethods::EMPTY_ID) $i = 0;
                                     $flt_val[] = $i;
                                 }
                             }
@@ -320,7 +340,7 @@ class WebixList {
                         case 'car':
                         case 'car_none':
                             $flt_sec = $s_ok ? $this->filter_raw->$flt_oper : '';
-                            PageManager::debug($flt_sec, 'car_sec');
+                            GlobalMethods::debug($flt_sec, 'car_sec');
                             if($flt_val || $flt_sec) {
                                 $fx = ['id_only'];
                                 if($flt_val) $fx[] = [ 'ts_number LIKE :u', 'u', "%$flt_val%" ];
@@ -332,56 +352,21 @@ class WebixList {
                             break;
 
                         case 'agg':
-                            $flt_sec = $s_ok ? $this->filter_raw->$flt_oper : '';
-                            if($flt_val || $flt_sec) {
-                                $fx = ['id_only', 'non_empty'];
-                                $cars   = '';
-                                $trails = '';
-                                if($flt_val) $cars   = CarModel::findByFullText($flt_val);
-                                if($flt_sec) $trails = TrailerModel::findByText($flt_sec, 0, true);
+                            // $flt_sec = $s_ok ? $this->filter_raw->$flt_oper : '';
+                            // if($flt_val || $flt_sec) {
+                            //     $fx = ['id_only', 'non_empty'];
+                            //     $cars   = '';
+                            //     $trails = '';
+                            //     if($flt_val) $cars   = CarModel::findByFullText($flt_val);
+                            //     if($flt_sec) $trails = TrailerModel::findByText($flt_sec, 0, true);
 
-                                if($cars)   $fx[] = "car_mdl IN($cars)";
-                                if($trails) $fx[] = "trailer_mdl IN($trails)";
-                                $flt_val = implode(',', Aggregation::getList($fx, 'id'));
-                                $flt_oper = 'IN';
-                            }
+                            //     if($cars)   $fx[] = "car_mdl IN($cars)";
+                            //     if($trails) $fx[] = "trailer_mdl IN($trails)";
+                            //     $flt_val = implode(',', Aggregation::getList($fx, 'id'));
+                            //     $flt_oper = 'IN';
+                            // }
                             break;
 
-                        case 'storage':
-                            $tp = 'storage_type';
-                            $id = 'storage_id';
-                            if(is_string($flt_ext) && $flt_ext) {
-                                $fe = explode(',', $flt_ext);
-                                $tp = $fe[0];
-                                $id = $fe[1];
-                            }
-                            $fx = [];
-                            $lst1 = Storage::findByText($flt_val, 0, true);
-                            $lst2 = FixedAsset::findByText($flt_val, 0, true);
-                            $lst3 = Contractor::findByText($flt_val, 0, true);
-                            $lst4 = PersonPosition::findByText($flt_val, 0, true);
-                            if($lst1) $fx[] = "($tp = 1 AND $id IN($lst1))";
-                            if($lst2) $fx[] = "($tp = 2 AND $id IN($lst2))";
-                            if($lst3) $fx[] = "($tp = 3 AND $id IN($lst3))";
-                            if($lst4) $fx[] = "($tp = 4 AND $id IN($lst4))";
-                            $flt_val = '(' . implode(' OR ', $fx) . ')';
-                            break;
-
-                        case 'frp':
-                            $tp = 'frp_type';
-                            $id = 'frp_id';
-                            if(is_string($flt_ext) && $flt_ext) {
-                                $fe = explode(',', $flt_ext);
-                                $tp = $fe[0];
-                                $id = $fe[1];
-                            }
-                            $fx = [];
-                            $lst1 = Person::findByText($flt_val, 0, true);
-                            $lst2 = Contractor::findByText($flt_val, 0, true);
-                            if($lst1) $fx[] = "($tp = 1 AND $id IN($lst1))";
-                            if($lst2) $fx[] = "($tp = 2 AND $id IN($lst2))";
-                            $flt_val = '(' . implode(' OR ', $fx) . ')';
-                            break;
                     }
                 }
 
@@ -396,10 +381,10 @@ class WebixList {
                         $fun_after = $fun ? array_shift($fun) : '';
                         if($fun_class && $fun_name && is_array($fun_args)) {
                             $args = self::replaceValInArray($fun_args, $flt_val, $flt_sec);
-                            //PageManager::debug($args, "$fun_class::$fun_name");
+                            //GlobalMethods::debug($args, "$fun_class::$fun_name");
                             $flt_val = call_user_func_array([$fun_class, $fun_name] , $args);
-                            //PageManager::debug($DB->sql, "$fun_class::$fun_name sql");
-                            if($DB->error) PageManager::debug($DB->error, "$fun_class::$fun_name err");
+                            //GlobalMethods::debug($DB->sql, "$fun_class::$fun_name sql");
+                            if($DB->error) GlobalMethods::debug($DB->error, "$fun_class::$fun_name err");
                         }
                         switch($fun_after) {
                             case 'imp':
@@ -463,7 +448,7 @@ class WebixList {
                         $cnt = 0;
                         break;
                 }
-                
+
                 while($cnt > 0) {
                     self::$filter_oper_cache[] = $flt_name;
                     $cnt--;

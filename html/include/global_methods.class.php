@@ -4,6 +4,8 @@ class GlobalMethods {
     public $debug = '';
     public static $pidFile = '';
 
+    const EMPTY_ID = MAX_ID;
+
     public static function debug($obj, $name = '') {
         $v = $obj;
         $v = json_encode($obj, JSON_UNESCAPED_UNICODE);
