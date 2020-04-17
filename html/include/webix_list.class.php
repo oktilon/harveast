@@ -72,7 +72,7 @@ class WebixList {
     public function parseOrder($class, $def = 'id DESC', $ord = '', $alias = []) {
         $ret = [];
         $o = $ord ? $ord : (isset($_POST['ord']) ? $_POST['ord'] : $this->ord_cache);
-        $arr = json_decode($o);
+        $arr = is_string($o) ? json_decode($o) : (is_array($o) ? $o : []);
         if(!is_array($arr)) {
             if(is_object($arr)) {
                 $arr = [$arr];
