@@ -22,6 +22,6 @@ $lst = $api->getMessages($c, $b, $e);
 echo "Count = " . count($lst) . "\n";
 echo json_encode($lst, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL;
 echo "Err:\n";
-echo json_encode(WialoApi::$m_err, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL;
+echo json_encode(WialonApi::$m_err, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL;
 echo "Res:\n";
-echo json_encode(WialoApi::$m_res, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL;
+echo json_encode(WialonApi::$m_res, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL;
