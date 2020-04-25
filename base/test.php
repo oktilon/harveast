@@ -6,12 +6,14 @@ $args = [];
 if($argc > 1) {
     $args = array_slice($argv, 1);
 }
+$tmB = $args ? array_shift($tm) : '07:37:00';
+$tmE = $args ? array_shift($tm) : '07:38:00';
 
 $api = new WialonApi();
 
 $c = 919;
-$b = new DateTime('2020-04-25 07:37:00');
-$e = new DateTime('2020-04-25 07:38:00');
+$b = new DateTime('2020-04-25 07:37:00', WialonApi::getTimezone());
+$e = new DateTime('2020-04-25 07:38:00', WialonApi::getTimezone());
 
 echo json_encode([
     'c' => $c,
