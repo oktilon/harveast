@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__DIR__) . '/html/sess.php';
+$_REQUEST['obj'] = '{"p":1}';
 
 $args = [];
 if($argc > 1) {
@@ -9,8 +10,8 @@ if($argc > 1) {
 $api = new WialonApi();
 
 $c = 919;
-$b = new DateTime('2020-04-25 07:37:25');
-$e = new DateTime('2020-04-25 07:38:40');
+$b = new DateTime('2020-04-25 07:37:00');
+$e = new DateTime('2020-04-25 07:38:00');
 
 echo json_encode([
     'c' => $c,
