@@ -9,10 +9,11 @@ class CarLogPoint {
     public $ang    = 0;
     /** @var StPoint */
     public $pt;
+    public $mv     = 0;
 
     public static $total  = 0;
     public static $cachePoints  = [];
-    public static $fields = 'id, dt, geo_id, spd, ang, St_AsText(pt) pt';
+    public static $fields = 'id, dt, geo_id, spd, ang, St_AsText(pt) pt, mv';
 
     public function __construct($arg = 0, $tms = 0) {
         global $PG;
@@ -97,15 +98,17 @@ class CarLogPoint {
         $tms = self::convertWialonTimestamp($msg->t);
         $part = self::getPartitionFromTime($tms);
         self::$cachePoints[] = $msg->t;
+        $mv = $msg->pos->s >= CarLogItem::$minSpeed ? 1 : 0;
         $ret = $PG->prepare("INSERT INTO $part
                             (id, dt, geo_id, spd, ang, pt)
-                            VALUES (:id, :dt, :gid, :spd, :ang, ST_GeomFromText(:pt))")
+                            VALUES (:id, :dt, :gid, :spd, :ang, ST_GeomFromText(:pt), :mv)")
                 ->bind('id', $iid)
                 ->bind('dt', $tms)
                 ->bind('gid', $gid)
                 ->bind('spd', $msg->pos->s)
                 ->bind('ang', $msg->pos->c)
                 ->bind('pt', $msg->pos->getWkt())
+                ->bind('mv', $mv)
                 ->execute();
         if(!$ret) echo "[pt_err:{$PG->error}]";
         return $ret;
