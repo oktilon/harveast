@@ -97,7 +97,7 @@ class CarLogPoint {
         $tms = self::convertWialonTimestamp($msg->t);
         $part = self::getPartitionFromTime($tms);
         self::$cachePoints[] = $msg->t;
-        return $PG->prepare("INSERT INTO $part
+        $ret = $PG->prepare("INSERT INTO $part
                             (id, dt, geo_id, spd, ang, pt)
                             VALUES (:id, :dt, :gid, :spd, :ang, ST_GeomFromText(:pt))")
                 ->bind('id', $iid)
@@ -107,6 +107,8 @@ class CarLogPoint {
                 ->bind('ang', $msg->pos->c)
                 ->bind('pt', $msg->pos->getWkt())
                 ->execute();
+        if(!$ret) echo "[pt_err:{$PG->error}]";
+        return $ret;
     }
 
     public static function getList($flt = array(), $ord = '', $lim = '') {
