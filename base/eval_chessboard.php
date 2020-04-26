@@ -43,7 +43,7 @@ while($args) {
                 case 'c':
                     $cars[] = $i;
                     break;
-                case 'm':
+                case 'p':
                     $part = $i;
                     $cmd = '';
                     break;
