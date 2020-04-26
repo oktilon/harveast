@@ -107,7 +107,7 @@ try {
         echo ' ' . $cnt . " readed\n";
         $total_points += $cnt;
 
-        /** @var OrderLogPoint */
+        /** @var CarLogPoint */
         $prev_pnt = null;
         /** @var OrderRelocation[] */
         $relocations = [];

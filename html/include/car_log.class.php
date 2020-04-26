@@ -200,7 +200,7 @@ class CarLog {
         return intval($this->dt_beg->format('Y'));
     }
 
-    public function append(WialonMessage $msg, WialonMessage $pm = null) {
+    public function append(WialonMessage $msg, WialonMessage $pm = null, $iid) {
         $item = null;
         $last = null;
         self::$mark = false;
@@ -242,7 +242,7 @@ class CarLog {
             self::$mark = true;
             $this->items[] = $item;
         }
-        $item->append($msg, $pm);
+        $item->append($msg, $pm, $iid);
         return true;
     }
 

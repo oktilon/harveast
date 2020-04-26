@@ -279,7 +279,7 @@ class CarLogItem {
         return false;
     }
 
-    public function append(WialonMessage $msg, WialonMessage $pm = null) {
+    public function append(WialonMessage $msg, WialonMessage $pm = null, $iid) {
         if($msg->t < $this->tm_last) return;
 
         $dt = $msg->t - $this->tm_last;
@@ -310,6 +310,7 @@ class CarLogItem {
                 break;
             }
         }
+        CarLogPoint::addPoint($msg, $gid, $iid);
         if(!isset($this->geos[$gid])) $this->geos[$gid] = 0;
         $this->geos[$gid] += $dt;
         arsort($this->geos);

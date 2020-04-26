@@ -24,6 +24,7 @@ class CarCache {
     public static $oneDay  = OrderLog::ONE_DAY;  // sec = 1 day
 
     public static $partialSize = 8;
+    public static $oldPointsGap = 3600; // 1 hour
 
     public function __construct($row) {
         global $DB;
@@ -141,7 +142,8 @@ class CarCache {
         );
         if(self::$is_debug) $tms = self::debug($tms, 'getApi');
         $this->stop = false;
-        $ret = $api->getMessages($this->id, $this->tm, $fin);
+        $tm_begin = $this->tm - self::$oldPointsGap;
+        $ret = $api->getMessages($this->id, $tm_begin, $fin);
         if(self::$is_debug) $tms = self::debug($tms, "getMessages", $ret);
         if(!$ret) {
             if($api->err) {
@@ -166,7 +168,7 @@ class CarCache {
                 }
                 $fin = $last_msg->t + 1;
                 if(self::$is_debug) self::$debug[] = "old(repeatGetMessages),fin=" . date('Y-m-d H:i:s', $fin);
-                $ret = $api->getMessages($this->id, $this->tm, $fin);
+                $ret = $api->getMessages($this->id, $tm_begin, $fin);
                 if(!$ret) {
                     self::$error = 'no msgs (' .
                             date('Y-m-d H:i:s', $this->tm) . '-' .
@@ -183,18 +185,22 @@ class CarCache {
                 if(($fin - $this->tm) > self::$maxStep) {
                     $fin = $this->tm + self::$maxStep;
                 }
-                $ret = $api->getMessages($this->id, $this->tm, $fin);
+                $ret = $api->getMessages($this->id, $tm_begin, $fin);
                 if(!is_array($ret)) $ret = [];
             }
         }
         self::$points = count($ret);
 
-        echo self::$points . "pts, \033[0;32m" . date('Y-m-d H:i:s', $this->tm) . "\033[0m - \033[0;32m" . date('Y-m-d H:i:s', $fin) . "\033[0m: ";
+        echo self::$points . "pts, \033[0;34m" . date('Y-m-d H:i:s', $tm_begin) . "\033[0m > \033[0;32m" . date('Y-m-d H:i:s', $this->tm) . "\033[0m - \033[0;32m" . date('Y-m-d H:i:s', $fin) . "\033[0m: ";
         $pl = null;
         $pm = null;
         $ix = 0;
         $times = [];
         foreach ($ret as $msg) {
+            if($msg->t <= $this->tm) {
+                CarLogPoint::calcPoint($msg, $this->id);
+                continue;
+            }
             $log = $this->getLog($msg);
             if(self::$is_debug) {
                 list($dt, $tms) = self::debug_time($tms);
@@ -203,13 +209,15 @@ class CarCache {
             if($log->id == 0) {
                 echo "\033[1;31m(l:{$log->id}={$DB->error})\033[0m\n";
                 self::$error = $DB->error ? $DB->error : 'Save car_log error';
+                // calc geoPoint at all
+                CarLogPoint::calcPoint($msg, $this->id);
                 return false;
             }
             if($pl == null || $pl->id != $log->id) {
                 echo "\033[1;32m(l:{$log->id})\033[0m";
             }
             $pl = $log;
-            $ok = $log->append($msg, $pm);
+            $ok = $log->append($msg, $pm, $this->id);
             if(CarLog::$mark) $ix = 0;
             if($ok) {
                 echo CarLogItem::$lastGeo > 0 ? 'o' : '.';

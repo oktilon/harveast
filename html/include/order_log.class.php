@@ -111,13 +111,13 @@ class OrderLog {
     * @param integer СКРИПТ = id проверяемой геозоны
     * @return OrderLog
     */
-    public function __construct($arg = 0, $line = null, OrderLogPoint $point = null, AggregationList $agl = null) {
+    public function __construct($arg = 0, $line = null, CarLogPoint $point = null, AggregationList $agl = null) {
         global $DB;
         $this->dt_beg = new DateTime('2000-01-01');
         $this->dt_end = new DateTime('2000-01-01');
         for($i = 0; $i < self::ANG_HALF * 2; $i++) $this->ang_lst[$i] = 0;
 
-        if($point && is_a($point, 'OrderLogPoint') && is_a($arg, 'WorkOrder')) { //($ord, $msg, $gid)
+        if($point && is_a($point, 'CarLogPoint') && is_a($arg, 'WorkOrder')) { //($ord, $msg, $gid)
             // echo "New Log {$arg->id} : $geo\n";
             $this->firm     = $arg->firm->id;
             $this->geo      = $point->geo_id;
@@ -484,7 +484,7 @@ class OrderLog {
         $this->log_pts[] = $pnt;
     }
 
-    public function addMessage(OrderLogPoint $pnt, $pnt_prev, WorkOrder $oOrd, $plog) {
+    public function addMessage(CarLogPoint $pnt, $pnt_prev, WorkOrder $oOrd, $plog) {
         self::$debug = [];
         $this->ev_time = $pnt->dt;
         $this->msg_cnt++;
@@ -696,7 +696,7 @@ class OrderLog {
     public function evaluate() {
         $this->setFlag(self::FLAG_IS_WORKING, $this->isDistanceEnough());
         echo 'Dst,';
-        //OrderLogPoint::setLogBulk($this->id, $this->log_pts);
+        //CarLogPoint::setLogBulk($this->id, $this->log_pts);
         //echo 'Pts,';
         //$this->setFlag(self::FLAG_IS_WORKING, true);
         return $this->msg_cnt;

@@ -160,7 +160,7 @@ try {
 
         $workIn = $ord->enumPointsGeo();
 
-        $ptcs = OrderLogPoint::initPointsCache($oid, $tBeg, $tEnd);
+        $ptcs = CarLogPoint::initPointsCache($oid, $tBeg, $tEnd);
         $final = false;
         $fast  = false;
 
@@ -236,7 +236,7 @@ try {
             $repeat = false;
 
             foreach($messages as $msg) {
-                if(OrderLogPoint::hasPoint($msg)) {
+                if(CarLogPoint::hasPoint($msg)) {
                     echo "-";
                     continue;
                 }
