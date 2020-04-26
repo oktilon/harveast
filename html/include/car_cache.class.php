@@ -190,6 +190,7 @@ class CarCache {
             }
         }
         self::$points = count($ret);
+        CarLogPoint::readCache($this->id, $tm_begin, $fin);
 
         echo self::$points . "pts, \033[0;34m" . date('Y-m-d H:i:s', $tm_begin) . "\033[0m > \033[0;32m" . date('Y-m-d H:i:s', $this->tm) . "\033[0m - \033[0;32m" . date('Y-m-d H:i:s', $fin) . "\033[0m: ";
         $pl = null;

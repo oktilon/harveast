@@ -69,11 +69,13 @@ class CarLogPoint {
         return "gps_points_" . date('Y_m', $tms);
     }
 
-    public static function initPointsCache($oid, $tBeg, $tEnd) {
+    public static function readCache($id, $tBeg, $tEnd) {
+        $beg = self::convertWialonTimestamp($tBeg) - 600;
+        $end = self::convertWialonTimestamp($tEnd) + 600;
         self::$cachePoints = self::getList([
-            ['ord_id = :o', 'o', $oid],
-            ['dt BETWEEN :b AND :e', 'b', $tBeg - 600],
-            [FALSE, 'e', $tEnd + 600],
+            ['id = :id', 'id', $id],
+            ['dt BETWEEN :b AND :e', 'b', $beg],
+            [FALSE, 'e', $end],
             'dt_only'
         ], 'dt');
         return count(self::$cachePoints);
@@ -96,8 +98,9 @@ class CarLogPoint {
     public static function addPoint(WialonMessage $msg, $gid, $iid) {
         global $PG;
         $tms = self::convertWialonTimestamp($msg->t);
+        if(in_array($tms, self::$cachePoints)) return true;
         $part = self::getPartitionFromTime($tms);
-        self::$cachePoints[] = $msg->t;
+        self::$cachePoints[] = $tms;
         $mv = $msg->pos->s >= CarLogItem::$minSpeed ? 1 : 0;
         $ret = $PG->prepare("INSERT INTO $part
                             (id, dt, geo_id, spd, ang, pt)
