@@ -103,7 +103,7 @@ class CarLogPoint {
         self::$cachePoints[] = $tms;
         $mv = $msg->pos->s >= CarLogItem::$minSpeed ? 1 : 0;
         $ret = $PG->prepare("INSERT INTO $part
-                            (id, dt, geo_id, spd, ang, pt)
+                            (id, dt, geo_id, spd, ang, pt, mv)
                             VALUES (:id, :dt, :gid, :spd, :ang, ST_GeomFromText(:pt), :mv)")
                 ->bind('id', $iid)
                 ->bind('dt', $tms)
