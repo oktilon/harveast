@@ -298,11 +298,7 @@ class WorkOrder {
             $flg |= self::FLAG_ORDER_RECALC;
 
             return $DB->prepare("UPDATE gps_orders
-                SET flags = :f,
-                    chk_dt  = 0,
-                    chk_pt  = 0,
-                    chk_geo = 0,
-                    chk_rep = 0
+                SET flags = :f
                 WHERE id = :i")
                 ->bind('f', $flg)
                 ->bind('i', $this->id)
@@ -578,7 +574,7 @@ class WorkOrder {
         return intval($q) > 0;
     }
 
-    public function updateCheckPoints($final, $fast) {
+    public function updateCheckPoints($final) {
         global $DB;
         $flgOn  = 0;
         $flgOff = 0;
@@ -586,17 +582,13 @@ class WorkOrder {
         if($final) {
             $flgOff = self::FLAG_ORDER_RECALC;
             $flgOn  = self::FLAG_ORDER_PTS;
-        } elseif($fast) {
-            $flgOn  = self::FLAG_ORDER_PTS_FAST;
         }
         $this->setFlag($flgOn, true);
         $this->setFlag($flgOff, false);
 
         return $DB->prepare("UPDATE gps_orders
-                SET chk_pt  = :d
-                  , flags   = (flags & ~:foff) | :fon
+                SET flags   = (flags & ~:foff) | :fon
                 WHERE id = :i")
-            ->bind('d', $this->chk_pt)
             ->bind('foff', $flgOff)
             ->bind('fon',  $flgOn)
             ->bind('i', $this->id)
@@ -627,11 +619,10 @@ class WorkOrder {
      * Finish area calculation
      *
      * @param int  $dst  distance
-     * @param bool $fast fast mode
      *
      * @return void
      */
-    public function finishArea($dst, $fast) {
+    public function finishArea($dst) {
         global $DB;
         $flg = self::FLAG_ORDER_AREA;
         $this->setFlag($flg, true);
@@ -657,23 +648,24 @@ class WorkOrder {
     public function resetWait() {
         global $DB;
         return $DB->prepare("UPDATE gps_orders
-                SET flags = flags & ~:f,
-                    gps_id = :g
+                SET gps_id = :g
+                    -- , flags = flags & ~:f
                 WHERE id = :i")
-            ->bind('f', self::FLAG_ORDER_START_WAITING)
+            // ->bind('f', self::FLAG_ORDER_START_WAITING)
             ->bind('g', $this->gps_id)
             ->bind('i', $this->id)
             ->execute();
     }
 
     public function getParsingPercent() {
-        if($this->isFinalPoint()) return 100;
+        if($this->getFlag(self::FLAG_ORDER_LOG)) return 100;
         $b = intval($this->d_beg->format('U'));
         $e = intval($this->d_end->format('U'));
-        if($this->chk_pt < $b) return 0;
+        $chk_pt = OrderLogPoint::getLastTime($this->gps_id);
+        if($chk_pt < $b) return 0;
         $x = $e - $b;
         if($x <= 0) $x = 1.0;
-        $per = intval(100.0 * ($this->chk_pt - $b) / $x);
+        $per = intval(100.0 * ($chk_pt - $b) / $x);
         if($per > 100) $per = 100;
         if($per < 0) $per = 0;
         return $per;

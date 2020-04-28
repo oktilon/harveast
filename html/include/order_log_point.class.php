@@ -115,17 +115,14 @@ class OrderLogPoint {
     //             ->execute();
     // }
 
-    // public static function setLogBulk($lid, $list) {
-    //     global $PG;
-    //     $lst = [];
-    //     foreach($list as $pnt) $lst[] = $pnt->id;
-    //     $ids = implode(',', $lst);
-    //     return $PG->prepare("UPDATE order_log_point
-    //                         SET log_id = :lid
-    //                         WHERE id IN($ids)")
-    //             ->bind('lid', $lid)
-    //             ->execute();
-    // }
+    public static function getLastTime($iid) {
+        global $PG;
+        return intval($PG->prepare("SELECT MAX(dt)
+                            FROM order_log_point
+                            WHERE id = :iid")
+                ->bind('iid', $iid)
+                ->execute_scalar());
+    }
 
 
     public static function initPointsCache($oid, $tBeg, $tEnd) {

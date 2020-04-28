@@ -216,7 +216,8 @@ class OrderLog {
 
     public function getWorkingArea() {
         global $PG;
-        $r = $PG->prepare("SELECT ST_AsText(poly) FROM order_area WHERE _id=:i")
+        $order_area_tbl = $this->getAreaTable();
+        $r = $PG->prepare("SELECT ST_AsText(poly) FROM {$order_area_tbl} WHERE id=:i")
                 ->bind('i', $this->id)
                 ->execute_scalar();
         return StMultiPolygon::fastParse($r);
@@ -224,7 +225,8 @@ class OrderLog {
 
     public function getTrack() {
         global $PG;
-        $r = $PG->prepare("SELECT ST_AsText(ml) FROM order_area WHERE _id=:i")
+        $order_area_tbl = $this->getAreaTable();
+        $r = $PG->prepare("SELECT ST_AsText(ml) FROM {$order_area_tbl} WHERE id=:i")
                 ->bind('i', $this->id)
                 ->execute_scalar();
         $t = StPolyline::fastParseMulty($r);
@@ -234,14 +236,15 @@ class OrderLog {
 
     public function getWay() {
         global $PG;
-        $r = $PG->prepare("SELECT ST_AsText(ST_LineMerge(ST_Collect(pts))) FROM order_log_line WHERE log_id = :i")
+        $order_line_tbl = $this->getLineTable();
+        $r = $PG->prepare("SELECT ST_AsText(ST_LineMerge(ST_Collect(pts))) FROM {$order_line_tbl} WHERE log_id = :i")
                 ->bind('i', $this->id)
                 ->execute_scalar();
         return StPolyline::fastParseMulty($r);
     }
 
     public function getClusterId() {
-        return CFirm::getClusterId($this->firm);
+        return Firm::getClusterId($this->firm);
     }
 
     /**
@@ -254,9 +257,21 @@ class OrderLog {
         return $ret;
     }
 
+    public function getAreaTable() {
+        if(intval($this->dt_beg->format('Y')) < 2020) return 'order_area';
+        return 'order_area_' . $this->dt_beg->format('Y_m');
+    }
+
+    public function getLineTable() {
+        if(intval($this->dt_beg->format('Y')) < 2020) return 'order_log_line';
+        return 'order_log_line_' . $this->dt_beg->format('Y_m');
+    }
+
     public function evalArea($dbl_track = false, $fast_mode = false, $no_crossout = false, $sz_erase = 0) {
         global $DB,$PG;
 
+        $order_area_tbl = $this->getAreaTable();
+        $order_line_tbl = $this->getLineTable();
         self::$error = '';
         $ret = 0.0;
         $offset = $this->top_wd / 2000.0;
@@ -268,22 +283,24 @@ class OrderLog {
         $loop = true;
         // 1 step buffer
         while($loop) {
-            PageManager::debug(sprintf("make %s line and offset {$offset}", $simple ? 'simple' : 'normal'));
+            GlobalMethods::debug(sprintf("make %s line and offset {$offset}", $simple ? 'simple' : 'normal'));
             if($simple) {
-                $q = $PG->prepare("INSERT INTO order_area (_id, ml)
-                                    SELECT :l, ST_Simplify(ST_LineMerge(ST_Collect(pts)), 0.00001)::geography
-                                    FROM order_log_line WHERE log_id = :l
-                                    ON CONFLICT (_id) DO UPDATE
+                $q = $PG->prepare("INSERT INTO {$order_area_tbl} (id, ml, dt)
+                                    SELECT :l, ST_Simplify(ST_LineMerge(ST_Collect(pts)), 0.00001)::geography, :d
+                                    FROM {$order_line_tbl} WHERE log_id = :l
+                                    ON CONFLICT (id, dt) DO UPDATE
                                         SET ml = excluded.ml")
                         ->bind('l', $this->id)
+                        ->bind('d', intval($this->dt_beg->format('U')))
                         ->execute();
             } else {
-                $q = $PG->prepare("INSERT INTO order_area (_id, ml)
-                                    SELECT :l, ST_LineMerge(ST_Collect(pts))::geography
-                                    FROM order_log_line WHERE log_id = :l
-                                    ON CONFLICT (_id) DO UPDATE
+                $q = $PG->prepare("INSERT INTO {$order_area_tbl} (id, ml, dt)
+                                    SELECT :l, ST_LineMerge(ST_Collect(pts))::geography, :d
+                                    FROM {$order_line_tbl} WHERE log_id = :l
+                                    ON CONFLICT (id, dt) DO UPDATE
                                         SET ml = excluded.ml")
                         ->bind('l', $this->id)
+                        ->bind('d', intval($this->dt_beg->format('U')))
                         ->execute();
             }
             if(!$q) {
@@ -291,9 +308,9 @@ class OrderLog {
                 $loop = false;
                 $skip = true;
             } else {
-                $q = $PG->prepare("UPDATE order_area oa
+                $q = $PG->prepare("UPDATE {$order_area_tbl} oa
                                 SET poly = ST_Buffer(ml, :o, :j)
-                                WHERE oa._id = :l")
+                                WHERE oa.id = :l")
                         ->bind('o', $offset)
                         ->bind('l', $this->id)
                         ->bind('j', 'endcap=flat join=round')
@@ -320,48 +337,48 @@ class OrderLog {
             }
         }
 
-        $q = $PG->prepare("SELECT ST_IsValid(poly) FROM order_area
-                            WHERE oa._id = :l")
+        $q = $PG->prepare("SELECT ST_IsValid(poly) FROM {$order_area_tbl}
+                            WHERE oa.id = :l")
                 ->bind('l', $this->id)
                 ->execute();
         if(!$q) {
             $flg |= self::FLAG_IS_INVALID;
-            PageManager::debug(sprintf('invalid_buf L:%d', $this->id));
+            GlobalMethods::debug(sprintf('invalid_buf L:%d', $this->id));
             // try to make_valid ?
         }
 
 
         if($skip) {
-            PageManager::debug(sprintf('skip log %d', $this->id, $this->geo));
+            GlobalMethods::debug(sprintf('skip log %d', $this->id, $this->geo));
         } else {
-            PageManager::debug(sprintf('cut log %d by geo %d', $this->id, $this->geo));
+            GlobalMethods::debug(sprintf('cut log %d by geo %d', $this->id, $this->geo));
             // 2 step intersection
-            $q = $PG->prepare("UPDATE order_area oa
+            $q = $PG->prepare("UPDATE {$order_area_tbl} oa
                             SET poly = ST_Intersection(oa.poly, g.poly)
                             FROM geofences g
-                            WHERE oa._id = :l AND g._id = :g")
+                            WHERE oa.id = :l AND g.id = :g")
                     ->bind('l', $this->id)
                     ->bind('g', $this->geo)
                     ->execute();
 
             if($sz_erase > 0) {
-                PageManager::debug(sprintf('log %d erase islands less than %f', $this->id, $sz_erase));
+                GlobalMethods::debug(sprintf('log %d erase islands less than %f', $this->id, $sz_erase));
                 $this->removeIslands($sz_erase, true);
             }
 
-            $q = $PG->prepare("SELECT ST_IsValid(poly) FROM order_area
-                                WHERE oa._id = :l")
+            $q = $PG->prepare("SELECT ST_IsValid(poly) FROM {$order_area_tbl}
+                                WHERE oa.id = :l")
                     ->bind('l', $this->id)
                     ->execute();
             if(!$q) {
                 $flg |= self::FLAG_IS_INVALID;
-                PageManager::debug(sprintf('invalid_cut L:%d, G:%d', $this->id, $this->geo));
+                GlobalMethods::debug(sprintf('invalid_cut L:%d, G:%d', $this->id, $this->geo));
                 // try to make_valid ?
             }
 
 
             //echo "calc area\n";
-            $q = $PG->prepare("SELECT ST_Area(poly) FROM order_area WHERE _id = :l")
+            $q = $PG->prepare("SELECT ST_Area(poly) FROM {$order_area_tbl} WHERE id = :l")
                 ->bind('l', $this->id)
                 ->execute_scalar();
             $ret = $q ? intval($q) : 0;
@@ -369,7 +386,7 @@ class OrderLog {
 
         if($dbl_track) {
             $q = $PG->prepare("SELECT ST_Length(ml)
-                        FROM order_area WHERE _id = :l;")
+                        FROM {$order_area_tbl} WHERE id = :l;")
                     ->bind('l', $this->id)
                     ->execute_scalar();
             $len = $q ? intval($q) : 0;
@@ -608,7 +625,9 @@ class OrderLog {
     }
 
     public function reset() {
-        global $PG, $DB;
+        global $PG;
+        $order_line_tbl = $this->getLineTable();
+
         $this->flags    = 0;
         $this->dt_beg   = new DateTime('2000-01-01');
         $this->dt_end   = new DateTime('2000-01-01');
@@ -636,20 +655,23 @@ class OrderLog {
 
         $this->save(false);
 
-        $PG->prepare("DELETE FROM order_log_line WHERE log_id = :id")
+        $PG->prepare("DELETE FROM {$order_line_tbl} WHERE log_id = :id")
             ->bind('id', $this->id)
             ->execute();
     }
 
     public function delete() {
         global $PG, $DB;
+        $order_area_tbl = $this->getAreaTable();
+        $order_line_tbl = $this->getLineTable();
+
         $DB->prepare('DELETE FROM gps_order_log WHERE id = :i')
             ->bind('i', $this->id)
             ->execute();
-        $PG->prepare("DELETE FROM order_log_line WHERE log_id = :id")
+        $PG->prepare("DELETE FROM {$order_line_tbl} WHERE log_id = :id")
             ->bind('id', $this->id)
             ->execute();
-        $PG->prepare("DELETE FROM order_area WHERE _id = :id")
+        $PG->prepare("DELETE FROM {$order_area_tbl} WHERE id = :id")
             ->bind('id', $this->id)
             ->execute();
     }
@@ -734,36 +756,38 @@ class OrderLog {
     public function removeIslands($min_size = 0, $skip_calc = false) {
         global $PG, $DB;
 
+        $order_area_tbl = $this->getAreaTable();
+
         $ret = 0;
         if(!$this->id) return -1;
 
-        $q = $PG->prepare("SELECT ST_NumGeometries(poly::geometry) FROM order_area WHERE _id = :i")
+        $q = $PG->prepare("SELECT ST_NumGeometries(poly::geometry) FROM {$order_area_tbl} WHERE id = :i")
             ->bind('i', $this->id)
             ->execute_scalar();
-        PageManager::debug($q, 'ST_NumGeometries');
+        GlobalMethods::debug($q, 'ST_NumGeometries');
         if($q > 1) {
-            $PG->prepare("UPDATE order_area
+            $PG->prepare("UPDATE {$order_area_tbl}
                     SET poly = (SELECT ST_Collect(gg)::geography FROM (
                         SELECT filter_rings((ST_Dump(o2.poly::geometry)).geom, :s) AS gg
-                        FROM order_area o2 WHERE o2._id = :i) as subq)
-                    WHERE _id = :i")
+                        FROM {$order_area_tbl} o2 WHERE o2.id = :i) as subq)
+                    WHERE id = :i")
                 ->bind('i', $this->id)
                 ->bind('s', $min_size)
                 ->execute();
-            PageManager::debug($PG->error, 'DumpMpErr');
+            GlobalMethods::debug($PG->error, 'DumpMpErr');
         } else {
-            $PG->prepare("UPDATE order_area
+            $PG->prepare("UPDATE {$order_area_tbl}
                     SET poly = filter_rings(poly::geometry, :s)::geography
-                    WHERE _id = :i")
+                    WHERE id = :i")
                 ->bind('i', $this->id)
                 ->bind('s', $min_size)
                 ->execute();
-            PageManager::debug($PG->error, 'DumpErr');
+            GlobalMethods::debug($PG->error, 'DumpErr');
         }
 
         if($skip_calc) return $ret;
 
-        $q = $PG->prepare("SELECT ST_Area(poly) FROM order_area WHERE _id = :i")
+        $q = $PG->prepare("SELECT ST_Area(poly) FROM {$order_area_tbl} WHERE id = :i")
             ->bind('i', $this->id)
             ->execute_scalar();
         $ret = $q ? intval($q) : 0;
@@ -812,13 +836,15 @@ class OrderLog {
     /**
      * Get export version
      * @param int $year Operation year
-     * @return ExportOrderWork
+     * @returnaa ExportOrderWork
+     * @return stdClass
      */
     public function getExportJson($year) {
         $field = GeoFence::getField($this->geo);
         $crop_by = $field->getCropByYear($year);
         $field_name = $field->id ? $field->name : GeoFence::getFieldName($this->geo);
-        $ret = new ExportOrderWork();
+        // $ret = new ExportOrderWork();
+        $ret = new stdClass();
         $ret->begin = $this->dt_beg->format('Y-m-d H:i:s');
         $ret->end   = $this->dt_end->format('Y-m-d H:i:s');
         $ret->field = $field_name;
@@ -988,23 +1014,22 @@ class OrderLog {
 
     public static function resetAreas($oids) {
         global $PG, $DB;
+        $order_area_tbl = $this->getAreaTable();
+        $order_line_tbl = $this->getLineTable();
+
         $ods = is_array($oids) ? implode(',', $oids) : $oids;
         $logs = self::getList(['id_only', "`ord` IN($ods)"], 'id');
         $log_ids = implode(',', $logs);
 
         WorkOrder::$err[] = "log_to_clean($log_ids)";
 
-        $q = $PG->prepare("DELETE FROM order_area WHERE _id IN ($log_ids)")
+        $q = $PG->prepare("DELETE FROM {$order_area_tbl} WHERE id IN ($log_ids)")
                 ->execute();
         WorkOrder::$err[] = $q ? 'PG:ok' : "PG:{$PG->error}";
 
-        $q = $PG->prepare("DELETE FROM order_log_line WHERE log_id IN ($log_ids)")
+        $q = $PG->prepare("DELETE FROM {$order_line_tbl} WHERE log_id IN ($log_ids)")
                 ->execute();
         WorkOrder::$err[] = $q ? 'PG_LN:ok' : "PG_LN:{$PG->error}";
-
-        $q = $PG->prepare("UPDATE order_log_point SET log_id = 0 WHERE ord_id IN ($ods)")
-                ->execute();
-        WorkOrder::$err[] = $q ? 'PG_PT:ok' : "PG_PT:{$PG->error}";
 
         $ojs = OrderJointItem::findJoints($logs);
         self::arrResetToLog($ojs, 'log');
@@ -1022,6 +1047,8 @@ class OrderLog {
 
     public static function resetParser($oids) {
         global $PG, $DB;
+        $order_line_tbl = $this->getLineTable();
+
         $ods = is_array($oids) ? implode(',', $oids) : $oids;
 
         $PG->prepare("DELETE FROM order_log_point WHERE ord_id IN($ods)")
@@ -1030,7 +1057,7 @@ class OrderLog {
         $logs = OrderLog::getList(['id_only', "`ord` IN($ods)"], 'id');
         $log_ids = implode(',', $logs);
         if($log_ids) {
-            $PG->prepare("DELETE FROM order_log_line WHERE log_id IN($log_ids)")
+            $PG->prepare("DELETE FROM {$order_line_tbl} WHERE log_id IN($log_ids)")
                 ->execute();
 
             $DB->prepare("DELETE FROM gps_order_log WHERE id IN($log_ids)")

@@ -102,15 +102,16 @@ try {
     foreach($orders as $iRow => $ord) { // По каждому наряду
         $ord_line = null;
         if(!$ord->tech_op->isFieldOperation()) {
-            $ord->finalAreaNoFldWork($fast_mode);
+            $ord->finalAreaNoFldWork();
             Info(sprintf("Ord: %d without fieldworks [0x%X]", $ord->id, $ord->flags));
             continue;
         }
 
+        $wd = 0;
+        if($ord->car->id == 257) $wd = 16800;
 
-
-        if($ord_line->tech_cond->width == 0) {
-            $ord->finalAreaNoWidth($fast_mode);
+        if($wd == 0) {
+            $ord->finalAreaNoWidth();
             Info(sprintf(
                 "Ord: %d without width (TOC:%d) [0x%X]"
                 , $ord->id
@@ -120,16 +121,19 @@ try {
             continue;
         }
 
-        printf("OID:%d, TOP:%d(%d), CAR_MDL:%d, TR_MDL:%d, Wd:%d\n",
+        $dbl_track = $ord->isDoubleTrack();
+
+        printf("OID:%d, TOP:%d(%d), CAR_MDL:%d, EQ_MDL:%d, Wd:%d%s\n",
             $ord->id,
-            $ord_line->tech_op->id,
-            $ord_line->tech_cond->id,
+            $ord->tech_op->id,
+            0,
             $ord->car->model->id,
-            $ord_line->trailer->id,
-            $ord_line->tech_cond->width
+            $ord->equip->id,
+            $wd,
+            $dbl_track ? ', DBL' : ''
         );
 
-        $dbl_track = $ord->isDoubleTrack();
+
 
         echo "Read logs ...";
         $logs = OrderLog::getControl($ord);
@@ -139,11 +143,11 @@ try {
         $dst = 0;
         $area = 0;
         foreach($logs as $log) {
-            $log->top_wd = $ord_line->tech_cond->width;
+            // $log->top_wd = $wd;
             if($log->canEvalArea()) {
                 echo "eval area for log {$log->id}\n";
                 $stm += $log->tm_stay;
-                $a = $log->evalArea($dbl_track, $fast_mode);
+                $a = $log->evalArea($dbl_track, );
                 $err = OrderLog::$error;
                 $area += $a;
                 Info("{$ord->id} work in {$log->geo} [L:$log->id] = $a $err");
@@ -154,25 +158,7 @@ try {
                 $dst += $log->sumDst();
             }
         }
-        $ord->finishArea($dst, $fast_mode);
-
-        $ln_reloc = null;
-        foreach ($ord->lines as $line) {
-            if($line->tech_op->isRelocation()) {
-                $ln_reloc = $line;
-                break;
-            }
-        }
-        if(!$ln_reloc) {
-            // create it
-        } else {
-            if(!$ln_reloc->tech_op->isRelocationFar() && $dst > 20000) {
-                // change techop
-            }
-            if($ln_reloc->tech_op->isRelocationFar() && $dst <= 20000) {
-                // change techop
-            }
-        }
+        $ord->finishArea($dst);
 
         $dst = number_format($dst / 1000, 2, ",", " ");
         $stm = gmdate("H:i:s", $stm);
