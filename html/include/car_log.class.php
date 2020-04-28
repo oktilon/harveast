@@ -203,10 +203,11 @@ class CarLog {
     public function append(WialonMessage $msg, WialonMessage $pm = null, $iid) {
         $item = null;
         $last = null;
+        $ttm = WialonApi::fromWialonTime($msg->t);
         self::$mark = false;
         foreach($this->items as $it) {
             $last = $it;
-            if($it->thisTime($msg->t)) {
+            if($it->thisTime($ttm)) {
                 $item = $it;
                 break;
             }
@@ -214,16 +215,16 @@ class CarLog {
 
         if($msg->pos->s >= CarLogItem::$minSpeed) {
             if($this->yearBeg() < 2001) {
-                $this->dt_beg->setTimestamp($msg->t);
+                $this->dt_beg->setTimestamp($ttm);
             }
-            $this->dt_end->setTimestamp($msg->t);
+            $this->dt_end->setTimestamp($ttm);
         }
 
         // Start-Stop calc
         if($this->mv_calc < self::$mv_calc_count) {
             if($msg->pos->s > self::$mv_calc_speed) {
                 if($this->mv_calc == 0) {
-                    $this->mv_beg = $msg->t;
+                    $this->mv_beg = $ttm;
                 }
                 $this->mv_calc++;
             } else {
@@ -231,7 +232,7 @@ class CarLog {
             }
         } else {
             if($msg->pos->s > self::$mv_calc_speed) {
-                $this->mv_end = $msg->t;
+                $this->mv_end = $ttm;
             }
         }
 
@@ -438,10 +439,11 @@ class CarLog {
         $ret->t = [];
         $lst = $w->getMessages($this->gps, $beg, $end);
         foreach($lst as $it) {
-            if($ret->b == 0) $ret->b = $it->t;
-            $ret->e = $it->t;
+            $ttm = WialonApi::fromWialonTime($it->t);
+            if($ret->b == 0) $ret->b = $ttm;
+            $ret->e = $ttm;
             $ret->t[] = [
-                't' => $it->t,
+                't' => $ttm,
                 'x' => $it->pos->x,
                 'y' => $it->pos->y,
             ];

@@ -47,7 +47,8 @@ class CarLogItem {
         if(is_object($arg) && is_a($arg, 'CarLog')) {
             $this->log_id = $arg->id;
             if(is_a($msg, 'WialonMessage')) {
-                $dt = OrderLog::dateFromUTC($msg->t);
+                $ttm = WialonApi::fromWialonTime($msg->t);
+                $dt = OrderLog::dateFromUTC($ttm);
                 $this->tm = $this->evalTm($dt);
             } elseif(is_numeric($msg)) {
                 $this->tm = $this->timeFromIx($msg);
@@ -280,14 +281,15 @@ class CarLogItem {
     }
 
     public function append(WialonMessage $msg, WialonMessage $pm = null, $iid) {
-        if($msg->t < $this->tm_last) return;
+        $ttm = WialonApi::fromWialonTime($msg->t);
+        if($ttm < $this->tm_last) return;
 
-        $dt = $msg->t - $this->tm_last;
+        $dt = $ttm - $this->tm_last;
         if($dt > 900) {
             if(self::$is_debug) {
-                echo "\nappend \033[91m{$dt}\033[0m = \033[35m" . date('Y-m-d H:i:s', $msg->t) . "\033[33m - \033[35m" . date('Y-m-d H:i:s', $this->tm_last) . "\033[0m\n";
+                echo "\nappend \033[91m{$dt}\033[0m = \033[35m" . date('Y-m-d H:i:s', $ttm) . "\033[33m - \033[35m" . date('Y-m-d H:i:s', $this->tm_last) . "\033[0m\n";
             }
-            syslog(LOG_CRIT, "bigtime append $dt=(" . date('Y-m-d H:i:s', $msg->t) . ")-(" . date('Y-m-d H:i:s', $this->tm_last) . ")");
+            syslog(LOG_CRIT, "bigtime append $dt=(" . date('Y-m-d H:i:s', $ttm) . ")-(" . date('Y-m-d H:i:s', $this->tm_last) . ")");
         }
         $this->spd_sum += ($msg->pos->s * $dt);
         $this->tm_tot += $dt;
@@ -299,7 +301,7 @@ class CarLogItem {
             $this->tm_eng += $dt;
         }
 
-        $this->tm_last = $msg->t;
+        $this->tm_last = $ttm;
         // GEO
         $lst = GeoFence::findPointFieldFast($msg->pos);
         $gid = 0;
@@ -326,22 +328,23 @@ class CarLogItem {
 
     public function close(CarLog $log, WialonMessage $msg, WialonMessage $pm = null) {
         $zero = $log->getZeroTms();
+        $ttm = WialonApi::fromWialonTime($msg->t);
         $max = $zero + ($this->tm + self::$timeStep) * 60;
-        if($msg->t < $this->tm_last) return;
-        $far = $msg->t - $this->tm_last;
-        $mid = $msg->t > $max ? $max : $msg->t;
+        if($ttm < $this->tm_last) return;
+        $far = $ttm - $this->tm_last;
+        $mid = $ttm > $max ? $max : $ttm;
         $dt  = $mid - $this->tm_last;
         if($dt < 0) return;
 
         if($dt > 900) {
             if(self::$is_debug) {
                 echo "\nclose \033[91m{$dt}\033[0m = \033[35m" . date('Y-m-d H:i:s', $mid) . "\033[93m - \033[35m" . date('Y-m-d H:i:s', $this->tm_last) . "\033[0m\n";
-                echo "\033[94mmsg\033[0m = \033[35m" . date('Y-m-d H:i:s', $msg->t) . "\033[0m\n";
+                echo "\033[94mmsg\033[0m = \033[35m" . date('Y-m-d H:i:s', $ttm) . "\033[0m\n";
                 echo "\033[94mmax\033[0m = \033[35m" . date('Y-m-d H:i:s', $max) . "\033[0m\n";
                 echo "\033[94mfar\033[0m = \033[35m" . $far . "\033[0m\n";
             }
             syslog(LOG_CRIT, "bigtime close $dt=(" . date('Y-m-d H:i:s', $mid) . ")-(" . date('Y-m-d H:i:s', $this->tm_last) . ")");
-            syslog(LOG_CRIT, "bigtime msg=(" . date('Y-m-d H:i:s', $msg->t) . ")");
+            syslog(LOG_CRIT, "bigtime msg=(" . date('Y-m-d H:i:s', $ttm) . ")");
             syslog(LOG_CRIT, "bigtime max=(" . date('Y-m-d H:i:s', $max) . ")");
             syslog(LOG_CRIT, "bigtime far=" . $far . "");
         }

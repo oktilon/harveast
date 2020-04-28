@@ -6,6 +6,7 @@ class CarCache {
     public $car = 0;
     public $ctp = 0;
 
+    /** @var CarLog[] */
     public $logs = [];
 
     public static $api = null;
@@ -161,12 +162,13 @@ class CarCache {
             }
             if($old) {
                 $last_msg = $api->getLastMessage($this->id);
-                if($last_msg->t <= $this->tm) {
+                $last_tm = WialonApi::fromWialonTime($last_msg->t);
+                if($last_tm <= $this->tm) {
                     self::$error = ' silent';
                     if(self::$is_debug) echo "silent\n";
                     return false;
                 }
-                $fin = $last_msg->t + 1;
+                $fin = $last_tm + 1;
                 if(self::$is_debug) self::$debug[] = "old(repeatGetMessages),fin=" . date('Y-m-d H:i:s', $fin);
                 $ret = $api->getMessages($this->id, $tm_begin, $fin);
                 if(!$ret) {
@@ -181,7 +183,7 @@ class CarCache {
                     return false;
                 }
                 $msg = $ret[0];
-                $this->tm = $msg->t - 1;
+                $this->tm = WialonApi::fromWialonTime($msg->t) - 1;
                 if(($fin - $this->tm) > self::$maxStep) {
                     $fin = $this->tm + self::$maxStep;
                 }
@@ -198,7 +200,8 @@ class CarCache {
         $ix = 0;
         $times = [];
         foreach ($ret as $msg) {
-            if($msg->t <= $this->tm) {
+            $ttm = WialonApi::fromWialonTime($msg->t);
+            if($ttm <= $this->tm) {
                 CarLogPoint::calcPoint($msg, $this->id);
                 continue;
             }
@@ -222,7 +225,7 @@ class CarCache {
             if(CarLog::$mark) $ix = 0;
             if($ok) {
                 echo CarLogItem::$lastGeo > 0 ? 'o' : '.';
-                $this->tm = $msg->t;
+                $this->tm = $ttm;
             } else {
                 echo "-";
             }
@@ -261,19 +264,20 @@ class CarCache {
 
     public function getLog(WialonMessage $msg) {
         if(self::$is_debug) $tms = GlobalMethods::getMTime();
+        $ttm = WialonApi::fromWialonTime($msg->t);
         foreach ($this->logs as $log) {
-            if($log->sameDate($msg->t)) return $log;
+            if($log->sameDate($ttm)) return $log;
         }
         if(self::$is_debug) $tms = self::debug($tms, "enumLogs", $this->logs);
 
-        $tm = CarLog::getDateFromTms($msg->t);
+        $tm = CarLog::getDateFromTms($ttm);
         $dt = $tm->format('Y-m-d');
         $lst = CarLog::getList(['all', ['gps = :g', 'g', $this->id], ['dt = :d', 'd', $dt]]);
         if($lst) {
             $ret = $lst[0];
             if(self::$is_debug) $tms = self::debug($tms, "findLog={$ret->id}", $lst);
         } else {
-            $ret = new CarLog($this, $msg->t);
+            $ret = new CarLog($this, $ttm);
 
             if(self::$is_debug) $tms = self::debug($tms, "createLog");
 

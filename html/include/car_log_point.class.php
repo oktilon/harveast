@@ -70,8 +70,8 @@ class CarLogPoint {
     }
 
     public static function readCache($id, $tBeg, $tEnd) {
-        $beg = self::convertWialonTimestamp($tBeg) - 600;
-        $end = self::convertWialonTimestamp($tEnd) + 600;
+        $beg = $tBeg - 600;
+        $end = $tEnd + 600;
         self::$cachePoints = self::getList([
             ['id = :id', 'id', $id],
             ['dt BETWEEN :b AND :e', 'b', $beg],
@@ -79,13 +79,6 @@ class CarLogPoint {
             'dt_only'
         ], 'dt');
         return count(self::$cachePoints);
-    }
-
-    public static function convertWialonTimestamp($tms) {
-        $dt = new DateTime("@{$tms}");
-        $dt->setTimezone(WialonApi::getTimezone());
-        $loc = new DateTime($dt->format('Y-m-d H:i:s'));
-        return intval($loc->format('U'));
     }
 
     public static function calcPoint(WialonMessage $msg, $iid) {
@@ -97,7 +90,7 @@ class CarLogPoint {
 
     public static function addPoint(WialonMessage $msg, $gid, $iid) {
         global $PG;
-        $tms = self::convertWialonTimestamp($msg->t);
+        $tms = WialonApi::fromWialonTime($msg->t);
         if(in_array($tms, self::$cachePoints)) return true;
         $part = self::getPartitionFromTime($tms);
         self::$cachePoints[] = $tms;

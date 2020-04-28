@@ -1,39 +1,38 @@
 <?php
-require_once dirname(dirname(dirname(__FILE__))) . '/cron.php';
-$init = time();
+require_once dirname(__DIR__) . '/html/sess.php';
+InfoPrefix(__FILE__);
+$_REQUEST['obj'] = '{"p":1}';
 
-$ord_only = [];
-$ord_list = false;
-$part_run = false;
-$part_div = 0;
-$part_del = 8;
-while($PM->args) {
-    $cmd = array_shift($PM->args);
-    switch($cmd) {
-        case '-o':
-            $ord_list = true;
-            $part_run = false;
-            break;
-
-        case '-p':
-            $part_run = true;
-            $ord_list = false;
-            break;
-
-        default:
-            $i = intval($cmd);
-            if($ord_list && $i) {
-                $ord_only[] = $i;
-            }
-            if($part_run && $i) {
-                $part_div = $i;
-                $part_run = false;
-            }
-            break;
-    }
+$args = [];
+if($argc > 1) {
+    $args = array_slice($argv, 1);
 }
 
-// $echo = json_encode($tmStart, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL;
+$ord_only = [];
+$part_div = 0;
+$part_del = 8;
+$cmd = '';
+while($args) {
+    $arg = array_shift($args);
+    if(preg_match('/^\-(\w+)$/', $arg, $m)) {
+        $cmd = $m[1];
+    } else {
+        $i = intval($arg);
+        if($cmd != '' && $i) {
+            switch($cmd) {
+                case 'o':
+                    $ord_only[] = $i;
+                    break;
+                case 'p':
+                    $part_div = $i;
+                    $cmd = '';
+                    break;
+            }
+        } else {
+            $cmd = '';
+        }
+    }
+}
 
 $add = '';
 if($part_div > 0) {
@@ -51,29 +50,25 @@ try {
     $lckFile  = str_replace('.php', "_{$part_div}.lck", $_SERVER['SCRIPT_FILENAME']);
 
     if(!$ord_only) {
-        if(!PageManager::pidLock($lckFile, 10000, ADMIN_CHAT, ["check_work_speed_{$part_div}", 'Ord:'])) die();
+        if(!GlobalMethods::pidLock($lckFile, 10000, ADMIN_CHAT, ["check_work_speed_{$part_div}", 'Ord:'])) die();
     }
-
-    $fTstNorm = WorkOrder::FLAG_ORDER_LOG | WorkOrder::FLAG_ORDER_PTS;
-    $fOnNorm  = WorkOrder::FLAG_ORDER_PTS;
-    $fTstFast = WorkOrder::FLAG_ORDER_LOG | WorkOrder::FLAG_ORDER_LOG_FAST | WorkOrder::FLAG_ORDER_PTS_FAST;
-    $fOnFast  = WorkOrder::FLAG_ORDER_PTS_FAST;
 
     $now = date('Y-m-d H:i:s', time() + 1800);
 
     $flt = [
-        "((flags & $fTstNorm) = $fOnNorm OR (flags & $fTstFast) = $fOnFast)",
-        'gps_id > 0',
-        ['d_beg <= :d', 'd', $now],
-        'with_lines'
+        ['(o.flags & :flog) = 0', 'flog', WorkOrder::FLAG_ORDER_LOG],
+        'o.gps_id > 0',
+        ['o.d_beg <= :d', 'd', $now],
+        ['d.tm.d_beg <= :d', 'd', $now],
+        'join_devices'
     ];
     if($part_div > 0) {
         $eq = $part_div - 1;
-        $flt[] = "gps_id % {$part_del} = {$eq}";
+        $flt[] = "o.gps_id % {$part_del} = {$eq}";
     }
-    if($ord_only) $flt[] = 'id IN(' . implode(',', $ord_only) . ')';
+    if($ord_only) $flt[] = 'o.id IN(' . implode(',', $ord_only) . ')';
 
-    $orders = WorkOrder::getList($flt, 'chk_dt, d_beg, car');
+    $orders = WorkOrder::getList($flt, 'd.tm, o.d_beg, o.car');
 
     if (!$orders) {
         Info('No orders. ' . $DB->error);
@@ -205,7 +200,7 @@ try {
     print_r($e->getTrace());
 }
 if(!$ord_only) {
-    PageManager::pidUnLock();
+    GlobalMethods::pidUnLock();
 }
 $dt = time() - $init;
 Info("Ended within $dt sec., Orders: $ord_cnt, Messages: $total");

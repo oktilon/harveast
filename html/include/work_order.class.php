@@ -18,18 +18,19 @@ class WorkOrder {
     public $move_dst = 0;
     public $note = '';
 
-    const FLAG_ORDER_DEL           = 0x1;   // deleted
-    const FLAG_ORDER_LOG           = 0x2;   // parsed
-    const FLAG_ORDER_AREA          = 0x4;   // area calculated
-    const FLAG_ORDER_JOINT         = 0x8;   // joint calculated
-    const FLAG_ORDER_RECALC        = 0x10;  // checked
-    const FLAG_ORDER_DBL_TRACK     = 0x20;  // parsed till 6 hour
-    const FLAG_ORDER_FUTURE_YEAR   = 0x40;  // area fast calculated
-    const FLAG_ORDER_INVALID_GEO   = 0x80;  // joint fast calculated
-    const FLAG_ORDER_NO_GPS        = 0x100; // has work (not gray)
-    const FLAG_ORDER_NO_FLDWORK    = 0x200; // calc area using double track
+    const FLAG_ORDER_PTS           = 0x1;
+    const FLAG_ORDER_LOG           = 0x2;
+    const FLAG_ORDER_AREA          = 0x4;
+    const FLAG_ORDER_JOINT         = 0x8;
+    const FLAG_ORDER_RECALC        = 0x10;
+    const FLAG_ORDER_DBL_TRACK     = 0x20;
+    const FLAG_ORDER_FUTURE_YEAR   = 0x40;
+    const FLAG_ORDER_INVALID_GEO   = 0x80;
+    const FLAG_ORDER_NO_GPS        = 0x100;
+    const FLAG_ORDER_NO_FLDWORK    = 0x200;
     const FLAG_ORDER_NO_WIDTH      = 0x400;
     const FLAG_ORDER_NO_MSGS       = 0x800;
+    const FLAG_ORDER_DEL           = 0x1000;
 
     private static $cache = [];
     public  static $total = 0;
@@ -37,21 +38,19 @@ class WorkOrder {
     public  static $err   = [];
 
     public static $flags_nm = [
-        ['f'=>self::FLAG_ORDER_DEL,           'n'=>'Deleted',                    'o' => 4,  'i'=>'far fa-trash',          'c'=>'#ff0000'],
-
-        ['f'=>self::FLAG_ORDER_LOG,           'n'=>'Parsed',                     'o' => 5,  'i'=>'far fa-crop',           'c'=>'#034605'],
-        ['f'=>self::FLAG_ORDER_AREA,          'n'=>'Area',                       'o' => 6,  'i'=>'far fa-calculator',     'c'=>'#034605'],
-        ['f'=>self::FLAG_ORDER_JOINT,         'n'=>'Joint area',                 'o' => 7,  'i'=>'far fa-check-square',   'c'=>'#034605'],
-        ['f'=>self::FLAG_ORDER_RECALC,        'n'=>'Recalculation',              'o' => 1,  'i'=>'far fa-sync',           'c'=>'#007bff'],
-
-        ['f'=>self::FLAG_ORDER_DBL_TRACK,     'n'=>'Double track',               'o' => 0,  'i'=>'far fa-clone'      ,    'c'=>'#753aff'],
-        ['f'=>self::FLAG_ORDER_FUTURE_YEAR,   'n'=>'Next year',                  'o' => 14, 'i'=>'far fa-hand-point-up',  'c'=>'#3277a8'],
-        ['f'=>self::FLAG_ORDER_INVALID_GEO,   'n'=>'Invalid geometry',           'o' => 0,  'i'=>'fas fa-infinity',       'c'=>'#A40000'],
-
-        ['f'=>self::FLAG_ORDER_NO_GPS,        'n'=>'No Gps',                     'o' => 9,  'i'=>'far fa-warning',        'c'=>'#CE5C00'],
-        ['f'=>self::FLAG_ORDER_NO_FLDWORK,    'n'=>'No fieldwork',               'o' => 10, 'i'=>'far fa-car',            'c'=>'#555753'],
-        ['f'=>self::FLAG_ORDER_NO_WIDTH,      'n'=>'Operation width is unknown', 'o' => 11, 'i'=>'far fa-exclamation-circle', 'c'=>'#A40000'],
-        ['f'=>self::FLAG_ORDER_NO_MSGS,       'n'=>'No messages',                'o' => 12, 'i'=>'far fa-times-circle',   'c'=>'#A40000'],
+        ['f'=>self::FLAG_ORDER_PTS,           'n'=>'Points finished',            'i'=>'far fa-dot-circle',     'c'=>'#034605'],
+        ['f'=>self::FLAG_ORDER_LOG,           'n'=>'Parsed',                     'i'=>'far fa-crop',           'c'=>'#034605'],
+        ['f'=>self::FLAG_ORDER_AREA,          'n'=>'Area',                       'i'=>'far fa-calculator',     'c'=>'#034605'],
+        ['f'=>self::FLAG_ORDER_JOINT,         'n'=>'Joint area',                 'i'=>'far fa-check-square',   'c'=>'#034605'],
+        ['f'=>self::FLAG_ORDER_RECALC,        'n'=>'Recalculation',              'i'=>'far fa-sync',           'c'=>'#007bff'],
+        ['f'=>self::FLAG_ORDER_DBL_TRACK,     'n'=>'Double track',               'i'=>'far fa-clone'      ,    'c'=>'#753aff'],
+        ['f'=>self::FLAG_ORDER_FUTURE_YEAR,   'n'=>'Next year',                  'i'=>'far fa-hand-point-up',  'c'=>'#3277a8'],
+        ['f'=>self::FLAG_ORDER_INVALID_GEO,   'n'=>'Invalid geometry',           'i'=>'fas fa-infinity',       'c'=>'#A40000'],
+        ['f'=>self::FLAG_ORDER_NO_GPS,        'n'=>'No Gps',                     'i'=>'far fa-warning',        'c'=>'#CE5C00'],
+        ['f'=>self::FLAG_ORDER_NO_FLDWORK,    'n'=>'No fieldwork',               'i'=>'far fa-car',            'c'=>'#555753'],
+        ['f'=>self::FLAG_ORDER_NO_WIDTH,      'n'=>'Operation width is unknown', 'i'=>'far fa-exclamation-circle', 'c'=>'#A40000'],
+        ['f'=>self::FLAG_ORDER_NO_MSGS,       'n'=>'No messages',                'i'=>'far fa-times-circle',   'c'=>'#A40000'],
+        ['f'=>self::FLAG_ORDER_DEL,           'n'=>'Deleted',                    'i'=>'far fa-trash',          'c'=>'#ff0000'],
     ];
 
     public function __construct($arg = 0) {
@@ -780,28 +779,6 @@ class WorkOrder {
                     ->execute();
     }
 
-    public function getWebixItem() {
-        $this->getLines(true);
-        $obj = $this->getJson();
-        $obj->car->agg = $this->car->hasAggregation();
-        $obj->parse = $this->getParsingPercent();
-        $gd = Equipment::byGpsId($this->gps_id);
-        $cd = Equipment::byGpsId($this->car->device->gps_id);
-        $obj->gps_imei = $gd->imei;
-        $obj->car_gps = $cd->gps_id;
-        $obj->car_imei = $cd->imei;
-        return $obj;
-    }
-
-    public static function getWebixArray($flt = [], $ord = 'id DESC', $lim = '') {
-        $ret = [ ];
-        $lst = self::getList($flt, $ord, $lim);
-        foreach($lst as $it) {
-            $ret[] = $it->getWebixItem();
-        }
-        return $ret;
-    }
-
     public static function cacheTechOperationsAndTrailers($flt, $flt_cache, $flt_top, $flt_trailer) {
         global $DB;
         $del = self::FLAG_ORDER_DEL;
@@ -891,12 +868,13 @@ class WorkOrder {
     /**
      * @return WorkOrder[]
      */
-    public static function getList($flt = [], $ord = 'd_beg DESC', $lim = '') {
+    public static function getList($flt = [], $ord = 'o.d_beg DESC', $lim = '') {
         global $DB;
         self::$total = 0;
         $empty = true;
         $all   = false;
         $json  = false;
+        $jnt = [];
         $ret = [];
         $par = [];
         $add = [];
@@ -907,6 +885,10 @@ class WorkOrder {
                 $flds = $fld = 'id';
             } elseif($it == 'all') {
                 $all = true;
+            } elseif($it == 'join_devices') {
+                $jnt[] = "LEFT JOIN gps_devices d ON d.gps_id = o.gps_id";
+            } elseif($it == 'with_lines') {
+                // dummy
             } elseif($it == 'non_empty') {
                 $empty = false;
             } elseif($it == 'json') {
@@ -923,12 +905,13 @@ class WorkOrder {
                 $add[] = $it;
             }
         }
-        if(!$all) $add[] = sprintf("(flags & %u) = 0", self::FLAG_ORDER_DEL);
+        if(!$all) $add[] = sprintf("(o.flags & %u) = 0", self::FLAG_ORDER_DEL);
         $add = $add ? ('WHERE ' . implode(' AND ', $add)) : '';
+        $join = $jnt ? implode(' ', $jnt) : '';
         $order = $ord ? "ORDER BY $ord" : '';
         $limit = $lim ? "LIMIT $lim" : '';
         $calc  = $lim ? "SQL_CALC_FOUND_ROWS" : '';
-        $DB->prepare("SELECT $calc $flds FROM gps_orders $add $order $limit");
+        $DB->prepare("SELECT $calc $flds FROM gps_orders o $join $add $order $limit");
         foreach($par as $k => $v) {
             $DB->bind($k, $v);
         }
