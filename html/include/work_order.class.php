@@ -2,16 +2,20 @@
 
 class WorkOrder {
     public $id = 0;
+    /** @var Firm */
     public $firm = null;
     /** @var Car */
     public $car = null;
     public $drv = 0;
+    /** @var TechOperation */
     public $tech_op = null;
+    /** @var Equipment */
     public $equip = null;
     public $d_beg = null;
     public $d_end = null;
     public $created = null;
     public $updated = null;
+    /** @var User */
     public $user = null;
     public $flags = 0;
     public $gps_id = 0;
@@ -81,52 +85,27 @@ class WorkOrder {
             case 'firm': return Firm::get($val);
             case 'tech_op': return TechOperation::get($val);
             case 'car': return Car::get($val);
-            case 'type': return WorkOrderType::get($val);
-            case 'user': return $val === 0 ? $PM->user : User::get($val);
+            case 'user': return User::get($val);
+            case 'equip': {
+                $r = new stdClass();
+                $r->id = intval($val);
+                return $r;
+                //return EquipmentModel::get($val);
+            }
             case 'note': return $val === 0 ? '' : $val;
         }
         return intval($val);
     }
 
-    private static function translatorFunction() {
-        return [ // Flag translator
-            _('Deleted'),
-            _('Points finished'),
-            _('Parsed'),
-            _('Area'),
-            _('Joint area'),
-            _('Points finished'),
-            _('Parsed'),
-            _('Area'),
-            _('Joint area'),
-            _('Checked'),
-            _('Good'),
-            _('Double track'),
-            _('Recalculation'),
-            _('No Gps'),
-            _('No fieldwork'),
-            _('Operation width is unknown'),
-            _('No messages'),
-            _('Wait for start'),
-            _('Exported'),
-            _('Saved'),
-            _('Export error'),
-            _('Relocations'),
-            _('Next year'),
-            _('Invalid geometry'),
-        ];
-    }
-
     public function save() {
-        $t = new SqlTable('gps_orders', $this, ['created', 'lines']);
+        $t = new SqlTable('gps_orders', $this, ['created']);
         return $t->save($this);
     }
 
     public function valid() {
         global $DB;
         $ord = $this->firm->id > 0 &&
-            $this->car->id > 0 &&
-            $this->type->id > 0;
+            $this->car->id > 0;
         if(!$ord) {
             $DB->error = _('Incomplete order data');
             return false;
@@ -262,42 +241,31 @@ class WorkOrder {
         return false;
     }
 
-    public function addPoint(WialonMessage $msg, $gid) {
-        return OrderLogPoint::addPoint($msg, $gid, $this->id);
-    }
-
-    // public function needToResetLines() {
-    //     return $this->chk_dt && OrderLogPoint::hasNewPointsBefore($this->chk_dt, $this->id);
-    // }
-
+    /**
+     * reset calculated logs
+     */
     public function resetLines() {
-        $this->chk_dt = 0;
-        $this->chk_geo = 0;
-        $this->chk_rep = 0;
         $this->move_dst = 0;
         $this->save();
-        //OrderLogPoint::resetOrder($this->id);
         $logs = OrderLog::getControl($this);
         foreach($logs as $log) {
-            if($log->geo == 0) {
-                $log->delete();
-            } else {
-                $log->reset();
-            }
+            $log->delete();
+            // if($log->geo == 0) {
+            // } else {
+            //     $log->reset();
+            // }
         }
     }
 
     /**
-     * @return OrderLogPoint[]
+     * @return CarLogPoint[]
      */
     public function getPoints() {
-        return OrderLogPoint::getList([
-            ['ord_id = :o', 'o', $this->id]
+        return CarLogPoint::getList([
+            ['id = :id', 'id', $this->gps_id],
+            ['dt BETWEEN :b AND :e', 'b', $this->d_beg->format('U') - 5],
+            [false, 'e', $this->d_end->format('U') + 5],
         ], 'dt');
-    }
-
-    public function enumPointsGeo() {
-        return OrderLogPoint::enumPointsGeo($this->id);
     }
 
     public function resetArea() {
@@ -587,25 +555,17 @@ class WorkOrder {
         return $this->lines = $ret;
     }
 
-    public static function finalOrderFlag($fast = false, $flag = 0) {
-        return ($fast ? self::FLAG_ORDER_AREA_FAST : self::FLAG_ORDER_AREA) | $flag;
-    }
-
     public function finalNoGps() { return $this->updateCheck(true, self::FLAG_ORDER_NO_GPS); }
     public function finalNoFldWork() { return $this->updateCheck(true, self::FLAG_ORDER_NO_FLDWORK); }
-    public function finalAreaNoFldWork($fast) {
-        $fin = !$fast;
-        return $this->updateCheck($fin, self::finalOrderFlag($fast, self::FLAG_ORDER_NO_FLDWORK), $fast);
+    public function finalAreaNoFldWork() {
+        return $this->updateCheck(true, self::FLAG_ORDER_AREA | self::FLAG_ORDER_NO_FLDWORK);
     }
-    public function finalAreaNoWidth($fast) {
-        $fin = !$fast;
-        return $this->updateCheck($fin, self::finalOrderFlag($fast, self::FLAG_ORDER_NO_WIDTH), $fast);
+    public function finalAreaNoWidth() {
+        return $this->updateCheck(true, self::FLAG_ORDER_AREA | self::FLAG_ORDER_NO_WIDTH);
     }
 
     public function finalNoMessages() {
-        $flag = 0;
-        if($this->chk_dt == 0) $flag = self::FLAG_ORDER_NO_MSGS;
-        return $this->updateCheck(true, $flag);
+        return $this->updateCheck(true, self::FLAG_ORDER_NO_MSGS);
     }
 
     public static function canWriteFastJoint($oid) {
@@ -642,7 +602,7 @@ class WorkOrder {
             ->bind('i', $this->id)
             ->execute();
     }
-    public function updateCheck($final, $flg = 0, $fast = false) {
+    public function updateCheck($final, $flg = 0) {
         global $DB;
         $flgOn  = 0;
         $flgOff = 0;
@@ -650,21 +610,13 @@ class WorkOrder {
         if($final) {
             $flgOff = self::FLAG_ORDER_RECALC;
             $flgOn  = self::FLAG_ORDER_LOG | self::FLAG_ORDER_PTS | $flg;
-        } elseif($fast) {
-            $flgOn = self::FLAG_ORDER_LOG_FAST;
         }
         $this->setFlag($flgOn, true);
         $this->setFlag($flgOff, false);
 
         return $DB->prepare("UPDATE gps_orders
-                SET chk_dt  = :d
-                  , chk_geo = :g
-                  , chk_rep = :r
-                  , flags   = (flags & ~:foff) | :fon
+                SET flags   = (flags & ~:foff) | :fon
                 WHERE id = :i")
-            ->bind('d', $this->chk_dt)
-            ->bind('g', $this->chk_geo)
-            ->bind('r', $this->chk_rep)
             ->bind('foff', $flgOff)
             ->bind('fon',  $flgOn)
             ->bind('i', $this->id)
@@ -681,7 +633,7 @@ class WorkOrder {
      */
     public function finishArea($dst, $fast) {
         global $DB;
-        $flg = $this->finalOrderFlag($fast); //self::FLAG_ORDER_AREA;
+        $flg = self::FLAG_ORDER_AREA;
         $this->setFlag($flg, true);
         return $DB->prepare("UPDATE gps_orders
                 SET flags = flags | $flg,
@@ -875,6 +827,7 @@ class WorkOrder {
         $all   = false;
         $json  = false;
         $jnt = [];
+        $jnf = [];
         $ret = [];
         $par = [];
         $add = [];
@@ -897,6 +850,9 @@ class WorkOrder {
                 $cond = array_shift($it);
                 if($cond == 'fields') {
                     $flds = implode(',', $it);
+                } elseif($cond == 'join_devices') {
+                    $jnt[] = "LEFT JOIN gps_devices d ON d.gps_id = o.gps_id";
+                    $jnf = $it;
                 } else {
                     if($cond) $add[] = $cond;
                     $par[$it[0]] = $it[1];
@@ -911,7 +867,9 @@ class WorkOrder {
         $order = $ord ? "ORDER BY $ord" : '';
         $limit = $lim ? "LIMIT $lim" : '';
         $calc  = $lim ? "SQL_CALC_FOUND_ROWS" : '';
-        $DB->prepare("SELECT $calc $flds FROM gps_orders o $join $add $order $limit");
+        $sel = $join && $flds == '*' ? 'o.*' : $flds;
+        if($jnf) $sel .= ',' . implode(',', $jnf);
+        $DB->prepare("SELECT $calc $sel FROM gps_orders o $join $add $order $limit");
         foreach($par as $k => $v) {
             $DB->bind($k, $v);
         }

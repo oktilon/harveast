@@ -1,7 +1,7 @@
 <?php
 require_once dirname(__DIR__) . '/html/sess.php';
-InfoPrefix(__FILE__);
 $_REQUEST['obj'] = '{"p":1}';
+$init = time();
 
 $args = [];
 if($argc > 1) {
@@ -56,11 +56,11 @@ try {
     $now = date('Y-m-d H:i:s', time() + 1800);
 
     $flt = [
-        ['(o.flags & :flog) = 0', 'flog', WorkOrder::FLAG_ORDER_LOG],
+        ['(o.flags & :log) = 0', 'log', WorkOrder::FLAG_ORDER_LOG],
         'o.gps_id > 0',
         ['o.d_beg <= :d', 'd', $now],
-        ['d.tm.d_beg <= :d', 'd', $now],
-        'join_devices'
+        'd.tm > UNIX_TIMESTAMP(o.d_end)',
+        ['join_devices', 'd.tm']
     ];
     if($part_div > 0) {
         $eq = $part_div - 1;
@@ -93,7 +93,9 @@ try {
         $cid = $ord->car->id;
         $fid = $ord->firm->id;
         $tid = $ord->car->ts_type->id;
-        $fast = $ord->isFinalPoint() ? false : $ord->isFastPoint();
+        $ord_line = null;
+        $agl = new AggregationList();
+        if($cid == 257) $agl->hd_width = 16800;
 
         $msg_oid = sprintf("%d (%d of %d)", $oid, $iRow+1, $ord_cnt);
 
@@ -101,15 +103,7 @@ try {
         if($info) Info($info);
         $info = '';
 
-        $ord_line = null;
-        foreach ($ord->lines as $line) {
-            if($line->tech_op->isFieldOperation() && !$ord_line) {
-                $ord_line = $line;
-                break;
-            }
-        }
-
-        if(!$ord_line) {
+        if(!$ord->tech_op->isFieldOperation()) {
             $ord->finalNoFldWork();
             Info(sprintf("Ord: $msg_oid without fieldworks [0x%X]", $ord->flags));
             $itBeg = 0;
@@ -118,22 +112,22 @@ try {
 
         printf("%04d ORD:%06d ", $iRow + 1, $oid);
 
-        $agl = AggregationList::byOrderLine($ord, $ord_line);
-        // echo json_encode($agl, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL;
-        // die();
-
         $oEnd = intval($ord->d_end->format('U'));
 
         $ord->resetLines();
+        /** @var OrderLog[] */
+        $logs = [];
 
-        $logs = OrderLog::getControl($ord);
-
+        /** @var CarLogPoint[] */
         $points = $ord->getPoints();
 
         $pnt_prev = null;
 
         $pnt_count = count($points);
         $prc_count = 0;
+        $chk_geo = 0;
+        $chk_rep = 0;
+        $chk_tm = 0;
 
         foreach($points as $pnt) {
             //if($pnt->log_id) { echo 's'; continue; }
@@ -142,12 +136,12 @@ try {
             $log  = null;
             $plog = null;
             // find proper log
-            $change = $pnt->geo_id != $ord->chk_geo;
+            $change = $pnt->geo_id != $chk_geo;
             // $mdt = OrderLog::dateFromUTC($pnt->dt)->format('H:i:s');
             // printf("%s %04d %s ", $mdt, $pnt->geo_id, $change ? 'C' : '-');
             foreach($logs as $it) {
                 if($it->geo == $pnt->geo_id) $log = $it;
-                if($change && $it->geo == $ord->chk_geo) $plog = $it;
+                if($change && $it->geo == $chk_geo) $plog = $it;
             }
             // printf("L:%04d:%04d, PL:%04d:%04d",
             //     $log ? $log->id : 0,
@@ -158,22 +152,22 @@ try {
                 $log = new OrderLog($ord, $ord_line, $pnt, $agl);
                 $log->save(false);
                 $logs[] = $log;
-                echo "[{$log->geo}]";
+                echo "[g:{$log->geo}]";
             } else {
-                echo ".";
+                echo $log->geo ? "o" : ".";
             }
 
             // Add event to counters + evaluate wrong speed
-            $alert = $log->addMessage($pnt, $pnt_prev, $ord, $plog);
+            $alert = $log->addMessage($pnt, $pnt_prev, $chk_rep, $plog);
             $prc_count++;
             // echo "\n";
 
             $pnt_prev = $pnt;
-            $ord->chk_geo = $pnt->geo_id;
-            $ord->chk_rep = $log->rep_mode;
-            $ord->chk_dt  = $pnt->dt;
+            $chk_geo = $pnt->geo_id;
+            $chk_rep = $log->rep_mode;
+            $chk_tm = $pnt->dt;
         }
-        $mdt = OrderLog::dateFromUTC($ord->chk_dt)->format('Y-m-d H:i:s');
+        $mdt = date('Y-m-d H:i:s', $chk_tm);
         // printf("Fin {$ord->id} at $mdt fin = %d\n", $final);
         foreach($logs as $it) {
             //printf("Save L:%d(G:%d) = ", $it->id, $it->geo);
@@ -181,14 +175,13 @@ try {
             $r = $it->save();
             printf(" log:%d  \n", $it->id);
         }
-        $ord->updateCheck(!$fast, 0, $fast);
+        $ord->updateCheck(true, 0);
         $info = sprintf(
-            "Ord:%s till %s, proceed: %d of %d pts. %s [0x%X]"
+            "Ord:%s till %s, proceed: %d of %d pts. [0x%X]"
             , $msg_oid
             , $mdt
             , $prc_count
             , $pnt_count
-            , ($fast ? ' (fast)' : '')
             , $ord->flags
         );
     }

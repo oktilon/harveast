@@ -1,5 +1,5 @@
 <?php
-class TechOperation {
+class WorkType {
     public $id         = 0;
     public $guid       = i1C::EMPTY_GUID;
     public $name       = '';
@@ -106,7 +106,7 @@ class TechOperation {
         self::$m_upd = false;
         $guid = i1C::EMPTY_GUID;
         if(property_exists($obj, 'guid')) $guid = $obj->guid;
-        $ret = new TechOperation($guid);
+        $ret = new WorkType($guid);
         if($guid == i1C::EMPTY_GUID) return $ret;
         $ch = $ret->initFrom1C($obj);
         $upd = count(get_object_vars($ch)) > 0;
@@ -199,7 +199,7 @@ class TechOperation {
 
     public static function get($id) {
         if(!isset(self::$cache[$id])) {
-            self::$cache[$id] = new TechOperation($id);
+            self::$cache[$id] = new WorkType($id);
         }
         return self::$cache[$id];
     }
@@ -211,7 +211,7 @@ class TechOperation {
         }
         $ord = $id_only ? 'id' : 'name';
         if($id_only) $flt[] = 'id_only';
-        $r = TechOperation::getList($flt, $ord);
+        $r = WorkType::getList($flt, $ord);
         if($id_only && $implode) $r = implode(',', $r);
         return $r;
     }
@@ -326,17 +326,17 @@ class TechOperation {
                 $ids[] = 0;
             } else {
                 if($id >= 0) $ids[] = $id;
-                if($id == TechOperation::TOP_FIELDWORK) $fld = true;
-                if($id == TechOperation::TOP_NOT_FIELDWORK) $nfld = true;
+                if($id == WorkType::TOP_FIELDWORK) $fld = true;
+                if($id == WorkType::TOP_NOT_FIELDWORK) $nfld = true;
             }
         }
 
         if($fld) {
-            $tops = TechOperation::getFieldworks(true, false, false);
+            $tops = WorkType::getFieldworks(true, false, false);
             $ids = array_merge($ids, $tops);
         }
         if($nfld) {
-            $tops = TechOperation::getFieldworks(true, false, true);
+            $tops = WorkType::getFieldworks(true, false, true);
             $ids = array_merge($ids, $tops);
         }
 
@@ -414,7 +414,7 @@ class TechOperation {
             self::$total = intval($DB->select_scalar("SELECT FOUND_ROWS()"));
         }
         foreach($rows as $row) {
-            $ret[] = $obj ? new TechOperation($row) : ($fld ? intval($row[$fld]) : self::rowParse($row));
+            $ret[] = $obj ? new WorkType($row) : ($fld ? intval($row[$fld]) : self::rowParse($row));
         }
         if(!$ret && $fld && !$empty) $ret[] = -1;
         $DB->sql = $sql;

@@ -43,8 +43,10 @@ class OrderLog {
     public $ang_dst  = 0;
     public $ang_lst  = [];
 
+    /** @var OrderLogLine[] */
     public $lines    = [];
 
+    /** @var CarLogPoint[] */
     public $log_pts  = [];
 
     private $geoPerimeter = 0;
@@ -123,15 +125,15 @@ class OrderLog {
             $this->geo      = $point->geo_id;
             $this->car_gps  = $arg->car->device->gps_id;
             $this->car      = $arg->car->id;
-            $this->trailer  = $line->trailer->id;
+            $this->trailer  = $arg->equip->id;
             $this->ord      = $arg->id;
-            $this->ord_line = $line->id;
-            $this->techop   = $line->tech_op->id;
-            $this->top_cond = $line->tech_cond->id;
-            $this->top_wd   = $line->tech_cond->width;
+            $this->ord_line = 0;
+            $this->techop   = $arg->tech_op->id;
+            $this->top_cond = 0;
+            $this->top_wd   = $agl->hd_width;
             $this->flags    = 0;
-            $this->spd_min  = $agl->spd_min;
-            $this->spd_max  = $agl->spd_max;
+            $this->spd_min  = 0; //$agl->spd_min;
+            $this->spd_max  = 0; //$agl->spd_max;
             $this->dt_beg->setTimestamp($point->dt);
             $this->dt_end->setTimestamp($point->dt);
             $this->readMyGeoParameters();
@@ -204,8 +206,8 @@ class OrderLog {
     public function setRemoved($on = true) { $this->setFlag(self::FLAG_IS_REMOVED, $on); }
 
     public function canEvalArea() {
-        // return $this->geo > 0 && $this->isWorking() && $this->top_wd > 0;
-        return $this->geo > 0 && $this->top_wd > 0;
+        return $this->geo > 0 && $this->isWorking() && $this->top_wd > 0;
+        // return $this->geo > 0 && $this->top_wd > 0;
     }
 
     public function allowShowArea() {
@@ -459,6 +461,15 @@ class OrderLog {
         Info($inf . ($q ? "ok" : "err:{$DB->error}"));
     }
 
+    /**
+     * get appropriate line
+     *
+     * @param int $rep Current speed mode
+     * @param CarLogPoint $pnt Point
+     * @param bool $change Is under change
+     *
+     * @return OrderLogLine
+     */
     public function getLine($rep, $pnt = null, $change = false) {
         $ln = null;
         if(!$change) {
@@ -473,18 +484,35 @@ class OrderLog {
         return $ln;
     }
 
-    public function addPoint($pnt, $dst, $oOrd, $pnt_prev = null) {
-        $change = $oOrd->chk_rep != $this->rep_mode | $this->isChange();
+    /**
+     * add point to lines
+     *
+     * @param CarLogPoint $pnt Point
+     * @param int $dst Distance from prev.point
+     * @param int $chk_rep Current speed mode
+     * @param CarLogPoint $pnt_prev Previous point (or null)
+     *
+     */
+    public function addPoint($pnt, $dst, $chk_rep, $pnt_prev = null) {
+        $change = $chk_rep != $this->rep_mode | $this->isChange();
         $ln = $this->getLine($this->rep_mode, $pnt, $change);
         if($change && $pnt_prev) {
             $ln->addPoint($pnt_prev, 0);
         }
         $ln->addPoint($pnt, $dst);
-        $pnt->log_id = $this->id;
+        // $pnt->log_id = $this->id;
         $this->log_pts[] = $pnt;
     }
 
-    public function addMessage(CarLogPoint $pnt, $pnt_prev, WorkOrder $oOrd, $plog) {
+    /**
+     * add CarLogPoint to log
+     *
+     * @param CarLogPoint $pnt Point
+     * @param CarLogPoint $pnt_prev Previous point (or null)
+     * @param int $chk_rep Current speed mode
+     * @param OrderLog $plog Previous log
+     */
+    public function addMessage(CarLogPoint $pnt, $pnt_prev, $chk_rep, $plog) {
         self::$debug = [];
         $this->ev_time = $pnt->dt;
         $this->msg_cnt++;
@@ -498,7 +526,7 @@ class OrderLog {
         $tm  = $pnt_prev ? ($this->ev_time - $pnt_prev->dt) : 0;
 
         if($plog) {
-            $plog->addPoint($pnt, $dst, $oOrd);
+            $plog->addPoint($pnt, $dst, $chk_rep);
             $this->setChange(true);
         } else {
             $this->setChange(false);
@@ -534,9 +562,9 @@ class OrderLog {
             $this->resetReport(self::OL_MODE_NORM);
             // echo " N";
         }
-        if($plog && $pnt_prev) $this->addPoint($pnt_prev, 0, $oOrd);
+        if($plog && $pnt_prev) $this->addPoint($pnt_prev, 0, $chk_rep);
         // echo " a";
-        $this->addPoint($pnt, $dst, $oOrd, $pnt_prev);
+        $this->addPoint($pnt, $dst, $chk_rep, $pnt_prev);
         //if(self::$dbg_on) printf("d:% 6.2f, t:% 2u, s:% 3u, r:%u ", $dst, $tm, $spd, $this->rep_mode);
         // WRONG SPEED
         if( $this->rep_mode == self::OL_MODE_HIGH ||

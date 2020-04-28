@@ -1,6 +1,32 @@
 <?php
 $init = time();
-require_once dirname(dirname(dirname(__FILE__))) . '/cron.php';
+require_once dirname(__DIR__) . '/html/sess.php';
+$_REQUEST['obj'] = '{"p":1}';
+
+$args = [];
+if($argc > 1) {
+    $args = array_slice($argv, 1);
+}
+
+$ord_only = [];
+$cmd = '';
+while($args) {
+    $arg = array_shift($args);
+    if(preg_match('/^\-(\w+)$/', $arg, $m)) {
+        $cmd = $m[1];
+    } else {
+        $i = intval($arg);
+        if($cmd != '' && $i) {
+            switch($cmd) {
+                case 'o':
+                    $ord_only[] = $i;
+                    break;
+            }
+        } else {
+            $cmd = '';
+        }
+    }
+}
 
 $tm_mark = $init;
 function timeMark($cap) {
@@ -29,31 +55,9 @@ function itemTime() {
     $itBeg = time();
 }
 
-$fast_mode = false;
-$ord_only = false;
-while($PM->args) {
-    $cmd = array_shift($PM->args);
-    switch($cmd) {
-        case '-f':
-            $fast_mode = true;
-            break;
-        case '-o':
-            $ord_only = true;
-            break;
-        default:
-            if($ord_only === true) $ord_only = intval($cmd);
-    }
-}
-
-
 $add = '';
-if($fast_mode) {
-    $add = "_f";
-}
-if(is_bool($ord_only)) {
-    $ord_only = 0;
-} else {
-    $add = "_o($ord_only)";
+if($ord_only) {
+    $add = "_ords";
 }
 
 InfoPrefix(__FILE__, $add);
@@ -63,26 +67,22 @@ Info(sprintf('Started (%u)', getmypid()));
 try {
     $lckFile  = str_replace('.php', "{$add}.lck", $_SERVER['SCRIPT_FILENAME']);
 
-    if($ord_only == 0) {
-        if(!PageManager::pidLock($lckFile, 10000, ADMIN_CHAT)) die();
+    if(!$ord_only) {
+        if(!GlobalMethods::pidLock($lckFile, 10000, ADMIN_CHAT)) die();
     }
 
-    $sBp = substr(basename($_SERVER['PHP_SELF']), 0, -4);
-    $esc = Escalation::get($sBp);
-
-    $fLog = $fast_mode ? WorkOrder::FLAG_ORDER_LOG_FAST : WorkOrder::FLAG_ORDER_LOG;
-    $fChk = $fLog | WorkOrder::FLAG_ORDER_AREA | ($fast_mode ? WorkOrder::FLAG_ORDER_AREA_FAST : 0);
+    $fLog = WorkOrder::FLAG_ORDER_LOG;
+    $fChk = $fLog | WorkOrder::FLAG_ORDER_AREA;
 
     $flt = [
         "(flags & $fChk) = $fLog",
         'with_lines'
     ];
     if($ord_only) {
-        $flt[] = ["id = :i", 'i', $ord_only];
+        $lst = implode(',', $ord_only);
+        $flt[] = "id IN{$lst}";
     }
-    /**
-     * @var WorkOrder[]
-     */
+    /** @var WorkOrder[] */
     $orders = WorkOrder::getList($flt, 'd_beg, car');
     //echo "DB ERR : {$DB->error}\n";
 
@@ -99,34 +99,15 @@ try {
     $total = 0;
     $info = '';
 
-    // select ST_AsText() FROM order_log_line WHERE log_id=1
-
-    /*
-        select id, log_id,
-        to_timestamp(dtb)::time,
-        to_timestamp(dte)::time,
-        ST_NumPoints(pts),
-        St_AsText(ST_PointN(pts,1)),
-        St_AsText(ST_PointN(pts,-1)),
-        ST_AsText(pts)
-        from order_log_line WHERE log_id=1
-        ORDER BY dtb
-    */
-    //echo json_encode($ord->getSimple(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL;
-
     foreach($orders as $iRow => $ord) { // По каждому наряду
         $ord_line = null;
-        foreach ($ord->lines as $line) {
-            if($line->tech_op->isFieldOperation() && !$ord_line) {
-                $ord_line = $line;
-                break;
-            }
-        }
-        if(!$ord_line) {
+        if(!$ord->tech_op->isFieldOperation()) {
             $ord->finalAreaNoFldWork($fast_mode);
             Info(sprintf("Ord: %d without fieldworks [0x%X]", $ord->id, $ord->flags));
             continue;
         }
+
+
 
         if($ord_line->tech_cond->width == 0) {
             $ord->finalAreaNoWidth($fast_mode);
@@ -166,7 +147,7 @@ try {
                 $err = OrderLog::$error;
                 $area += $a;
                 Info("{$ord->id} work in {$log->geo} [L:$log->id] = $a $err");
-                $dbg = PageManager::popDebug();
+                $dbg = GlobalMethods::popDebug();
                 if($dbg) foreach($dbg as $ln) echo "$ln\n";
             } else {
                 echo "skip area for log {$log->id}\n";
@@ -210,7 +191,6 @@ try {
     Info('EvalArea Exception : ' . $e->getMessage());
     print_r($e->getTrace());
 }
-$esc->finish();
-if($ord_only == 0) PageManager::pidUnLock();
+if($ord_only == 0) GlobalMethods::pidUnLock();
 $dt = time() - $init;
 Info("Ended within $dt sec., Orders: $ord_cnt, Messages: $total");
