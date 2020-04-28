@@ -60,8 +60,13 @@
                         PARTITION OF {$tbl} FOR
                         VALUES FROM ($tm_beg) TO ($tm_end)")
                     ->execute();
-
             $add = $ok ? 'OK' : $PGA->error;
+
+            if($ok) {
+                $ok = $PGA->prepare("GRANT ALL ON TABLE $partition TO php")->execute();
+                $add = ', grant ' . ($ok ? 'OK' : $PGA->error);
+            }
+
             Info("Create partition {$partition} {$dt_beg}-{$dt_end} ({$tm_beg}-{$tm_end}): {$add}");
         }
     }

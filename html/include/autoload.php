@@ -35,12 +35,13 @@ function autoloadBase ($className){
     $clsName = strtolower(implode('_', $classParts));
     $filePath = PATH_INC . DIRECTORY_SEPARATOR . $fl . $clsName . '.class.php';
 
-    if(JSON::loadClass($clsName)) return;
-
     if (file_exists($filePath)) {
         require_once($filePath);
         return;
     }
+
+    if(JSON::loadClass($clsName)) return;
+
 }
 
 spl_autoload_register ('autoloadBase');

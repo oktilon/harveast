@@ -297,6 +297,20 @@ class connect_db {
         return $this;
     }
 
+    /**
+     * bind Column
+     *
+     * @return connect_db
+     */
+    public function bindColumn($col, &$var, $type = PDO::PARAM_STR, $maxSize = false) {
+        if($maxSize === false ) {
+            $this->lastStmt->bindColumn($col, $var, $type);
+        } else {
+            $this->lastStmt->bindColumn($col, $var, $type, $maxSize);
+        }
+        return $this;
+    }
+
     public function execute() {
         $ret = $this->lastStmt->execute();
         $this->fillStmtError();
