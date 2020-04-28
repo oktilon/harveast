@@ -99,6 +99,8 @@ class JSON
 			$DB->bind('module', $obj->m);
 			$q = $DB->execute_all();
 
+			if(defined('ALT_MODULES')) $q = GlobalMethods::altLoad($obj->m, $q);
+
 			if (count($q) > 0) {
 
 

@@ -1,15 +1,27 @@
 <?php
+
+function autoloadTryFile($fileName) {
+    $filePath = PATH_INC. DIRECTORY_SEPARATOR . $fileName;
+    if(file_exists($filePath)) {
+        require_once($filePath);
+        return true;
+    }
+    if(defined('ALT_MODULES')) {
+        $filePath = ALT_MODULES . $fileName;
+        if(file_exists($filePath)) {
+            require_once($filePath);
+            return true;
+        }
+    }
+    return false;
+}
+
 function autoloadBase ($className){
-    $filePath = PATH_INC. DIRECTORY_SEPARATOR . $className . '.class.php';
-    if(file_exists($filePath)) {
-        require_once($filePath);
-        return;
-    }
-    $filePath = PATH_INC. DIRECTORY_SEPARATOR . strtolower($className) . '.class.php';
-    if(file_exists($filePath)) {
-        require_once($filePath);
-        return;
-    }
+    $fileName = $className . '.class.php';
+    if(autoloadTryFile($fileName)) return;
+
+    $fileName = strtolower($className) . '.class.php';
+    if(autoloadTryFile($fileName)) return;
 
     if(JSON::loadClass($className)) return;
 
@@ -33,12 +45,8 @@ function autoloadBase ($className){
         $fl = array_shift($classParts) . DIRECTORY_SEPARATOR;
     }
     $clsName = strtolower(implode('_', $classParts));
-    $filePath = PATH_INC . DIRECTORY_SEPARATOR . $fl . $clsName . '.class.php';
-
-    if (file_exists($filePath)) {
-        require_once($filePath);
-        return;
-    }
+    $fileName = $fl . $clsName . '.class.php';
+    if(autoloadTryFile($fileName)) return;
 
     if(JSON::loadClass($clsName)) return;
 

@@ -477,8 +477,8 @@ class WorkOrder {
         foreach($this as $key => $val) {
             if(in_array($key, ['created'])) continue;
             if(is_a($val, 'DateTime')) $val = $val->format('Y-m-d H:i:s');
-            if(is_object($val) && method_exists($val, 'getSimple')) {
-                $val = $val->getSimple();
+            if(is_object($val) && method_exists($val, 'getJson')) {
+                $val = $val->getJson();
             }
             if($key == 'lines') {
                 $val = [];

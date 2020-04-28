@@ -91,4 +91,15 @@ class GlobalMethods {
     public static function pidUnLock() {
         if(self::$pidFile && file_exists(self::$pidFile)) unlink(self::$pidFile);
     }
+
+    public static function altLoad($m, $q) {
+        global $DB, $PG;
+        $filePath = ALT_MODULES . 'mdl' . DIRECTORY_SEPARATOR . $m . '.php';
+        if(file_exists($filePath)) {
+            $wxObjTMP = isset($_REQUEST['obj']) ? json_decode($_REQUEST['obj']) : false; $p = $wxObjTMP && property_exists($wxObjTMP, 'p') ? $wxObjTMP->p : false;
+            require $filePath;
+            return [];
+        }
+        return $q;
+    }
 }
