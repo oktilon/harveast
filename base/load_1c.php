@@ -55,7 +55,9 @@ while($q) {
                 switch($k) {
                     case 'measure_units': $cls = 'MeasureUnit'; break;
                     case 'equipment_models': $cls = 'EquipmentModel'; break;
+                    case 'vehicle_models': $cls = 'VehicleModel'; break;
                     case 'techops': $cls = 'TechOperation'; break;
+                    case 'fixed_assets': $cls = 'FixedAsset'; break;
                 }
                 if($cls && method_exists($cls, 'init')) {
                     $cnt = count($lst);

@@ -1,14 +1,18 @@
 <?php
-class EquipmentModel {
+class VehicleModel {
     public $id = 0;
     public $guid = '';
     public $name = '';
-    public $name_eng = '';
     public $parent = null;
     public $nomen = null;
-    public $wd = 0;
-    public $active = 0;
+    public $flags = 0;
+    public $car_type = '';
+    public $vehicle_type = null;
+    public $upd = null;
 
+    const FLAG_VM_DELETED      = 0x0001;
+    const FLAG_VM_ACTIVE       = 0x0002;
+    const FLAG_VM_SPECIAL      = 0x0004;
 
     private static $cache = [];
     public static $total = 0;
@@ -16,8 +20,10 @@ class EquipmentModel {
 
     public function __construct($arg = 0) {
         global $DB;
-        $this->parent = self::getProperty('parent');
-        $this->nomen  = self::getProperty('nomen');
+        $this->nomen = self::getProperty('nomen', 0);
+        $this->vehicle_type = self::getProperty('vehicle_type', 0);
+        $this->parent = self::getProperty('parent', 0);
+        $this->upd = self::getProperty('upd', '2000-01-01');
         $fld = '';
         $val = $arg;
         if(is_numeric($arg)) {
@@ -25,34 +31,30 @@ class EquipmentModel {
             $val = intval($arg);
             if($val == 0) return;
         }
-        if(is_string($arg)) {
-            if(!$fld && preg_match(i1C::GUID_REGEX, $arg)) {
-                if($arg == i1C::EMPTY_GUID) return;
-                $fld = 'guid';
-                $val = $arg;
-            }
+        if(is_string($arg) && preg_match(i1C::GUID_REGEX, $arg)) {
+            if($arg == i1C::EMPTY_GUID) return;
+            $fld = 'guid';
         }
         if($fld) {
-            $q = $DB->prepare("SELECT * FROM equipment_models WHERE $fld = :v")
+            $q = $DB->prepare("SELECT * FROM vehicle_models WHERE $fld = :v")
                     ->bind('v', $val)->execute_row();
             if($q) {
                 $arg = $q;
             }
         }
         if(is_array($arg) || is_object($arg)) {
-            foreach($arg as $key => $val) {
-                $this->$key = self::getProperty($key, $val);
-            }
+            foreach($arg as $k => $v) $this->$k = self::getProperty($k, $v);
         }
     }
 
-    private static function getProperty($key, $val = 0) {
+    private static function getProperty($key, $val) {
         switch($key) {
             case 'id':
-            case 'wd':
-            case 'active': return intval($val);
-            case 'parent': return EquipmentParent::get($val);
+            case 'flags':
+            case 'upd': return new DateTime($val);
             case 'nomen': return Nomenclature::get($val);
+            case 'parent': return VehicleModelParent::get($val);
+            case 'vehicle_type': return VehicleType::get($val);
         }
         return $val;
     }
@@ -61,7 +63,7 @@ class EquipmentModel {
         self::$m_upd = false;
         $guid = i1C::EMPTY_GUID;
         if(property_exists($obj, 'guid')) $guid = $obj->guid;
-        $ret = new EquipmentModel($guid);
+        $ret = new VehicleModel($guid);
         if(!i1C::validGuid($guid)) return $ret;
         $ch = $ret->initFrom1C($obj);
         $upd = count(get_object_vars($ch)) > 0;
@@ -71,77 +73,89 @@ class EquipmentModel {
         if($upd) {
             self::$m_upd = true;
             $ret->save();
-            Changes::write('equipment_models', $ret, $ch);
+            Changes::write('vehicle_models', $ret, $ch);
         }
         return $ret;
     }
 
     private function initFrom1C($obj) {
         $ch = new stdClass();
+        $flg     = 0;
+
+        $flags = [
+            'active' => self::FLAG_VM_ACTIVE,
+            'is_special' => self::FLAG_VM_SPECIAL,
+        ];
 
         $extra = [
             'nomen_guid' => '',
             'nomen_name' => '',
+            'vechile_type_guid' => '',
+            'vechile_type_name' => '',
         ];
 
         foreach($obj as $key => $val) {
             if(property_exists($this, $key)) {
-                if($key == 'wd') $val = 1000 * $val;
                 $nv = self::getProperty($key, $val);
                 if($this->$key != $nv) {
                     $this->$key = $nv;
                     $ch->$key = $nv;
                 }
+            } elseif(key_exists($key, $flags)) {
+                if($val === 'true') $val = true;
+                if($val === 'false') $val = false;
+                if($val) $flg |= $flags[$key];
             } elseif(key_exists($key, $extra)) {
                 $extra[$key] = $val;
             } elseif($key == 'parent_name') {
-                $nv = EquipmentParent::init($val);
-                if($this->parent->id != $nv->id) {
-                    $this->parent = $nv;
-                    $ch->parent = $nv->id;
-                }
-            } elseif($key == 'active') {
-                $nv = $val == 'true' ? 1 : 0;
-                if($this->active != $nv) {
-                    $this->active = $nv;
-                    $ch->active = $nv;
+                $par = VehicleModelParent::init($val);
+                if($this->parent->id != $par->id) {
+                    $this->parent = $par;
+                    $ch->parent = $par->id;
                 }
             }
         }
-
-        $nom = Nomenclature::init($obj);
+        $nom = Nomenclature::init($extra);
         if($this->nomen->id != $nom->id) {
             $this->nomen = $nom;
             $ch->nomen = $nom->id;
         }
 
+        $vt = VehicleType::init($extra);
+        if($this->vehicle_type->id != $vt->id) {
+            $this->vehicle_type = $vt;
+            $ch->vehicle_type = $vt->id;
+        }
+
+        if($this->flags != $flg) {
+            $this->flags = $flg;
+            $ch->flags = $flg;
+        }
         return $ch;
     }
 
     public function save() {
-        $t = new SqlTable('equipment_models', $this);
+        $t = new SqlTable('vehicle_models', $this, ['upd']);
         return $t->save($this);
     }
 
     public static function get($id) {
         if(!isset(self::$cache[$id])) {
-            self::$cache[$id] = new EquipmentModel($id);
+            self::$cache[$id] = new VehicleModel($id);
         }
         return self::$cache[$id];
     }
 
-    public function getSimple() {
-        $arr = ['id', 'name', 'wd'];
+    public function getSimple() { return $this->getJson(); }
+
+    public static function getJson($simple = true) {
         $ret = new stdClass();
-        foreach($arr as $key) {
-            $val = $this->$key;
-            $ret->$key = $val;
+        $arr = ['id', 'name'];
+        foreach($this as $k => $v) {
+            $val = is_object($v) ? (method_exists($v, 'getJson') ? $v->getJson() : property_exists($v, 'id') ? $v->id : 'obj') : $v;
+            $ret->$k = $val;
         }
         return $ret;
-    }
-
-    public static function getJson() {
-        return $this->getSimple();
     }
 
     public static function findByText($txt, $limit = 0, $implode = false) {
@@ -158,23 +172,33 @@ class EquipmentModel {
         return $ret;
     }
 
+    public static function getLastVersion() {
+        global $DB;
+        $r = $DB->prepare("SELECT UNIX_TIMESTAMP(MAX(upd)) FROM vehicle_models")
+                ->execute_scalar();
+        return intval($r);
+    }
+
     public static function getList($flt = [], $ord = 'name', $lim = '') {
         global $DB;
         self::$total = 0;
-        $obj = true;
+        $fld = '';
         $ret = [];
         $par = [];
         $add = [];
         $flds = '*';
         foreach($flt as $it) {
             if($it == 'id_only') {
-                $flds = 'id';
-                $obj  = false;
+                $fld = $flds = 'id';
                 continue;
-            }
-            if(is_array($it)) {
-                $add[] = $it[0];
-                $par[$it[1]] = $it[2];
+            } elseif(is_array($it)) {
+                $cond = array_shift($it);
+                if($cond == 'fields') {
+                    $flds = implode(',', $it);
+                } else {
+                    if($cond) $add[] = $cond;
+                    $par[$it[0]] = $it[1];
+                }
             } else {
                 $add[] = $it;
             }
@@ -183,7 +207,7 @@ class EquipmentModel {
         $order = $ord ? "ORDER BY $ord" : '';
         $limit = $lim ? "LIMIT $lim" : '';
         $calc  = $lim ? "SQL_CALC_FOUND_ROWS" : '';
-        $DB->prepare("SELECT $calc $flds FROM equipment_models $add $order $limit");
+        $DB->prepare("SELECT $calc $flds FROM vehicle_models $add $order $limit");
         foreach($par as $k => $v) {
             $DB->bind($k, $v);
         }
@@ -195,7 +219,7 @@ class EquipmentModel {
             self::$total = intval($DB->select_scalar("SELECT FOUND_ROWS()"));
         }
         foreach($rows as $row) {
-            $ret[] = $obj ? new EquipmentModel($row) : intval($row['id']);
+            $ret[] = $flds == '*' ? new VehicleModel($row) : ($fld ? intval($row[$fld]) : $row);
         }
         return $ret;
     }

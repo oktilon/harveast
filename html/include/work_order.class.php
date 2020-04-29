@@ -16,7 +16,7 @@ class WorkOrder {
     public $created = null;
     public $updated = null;
     /** @var User */
-    public $user = null;
+    public $user = false;
     public $flags = 0;
     public $gps_id = 0;
     public $move_dst = 0;
@@ -58,10 +58,11 @@ class WorkOrder {
     ];
 
     public function __construct($arg = 0) {
-        global $DB, $PM;
+        global $DB;
         foreach($this as $key => $val) {
             if($val === null) $this->$key = self::getProperty($key);
         }
+        $this->user = User::getCurrentUser();
 
         if(is_numeric($arg)) {
             $id = intval($arg);
@@ -114,12 +115,12 @@ class WorkOrder {
             $DB->error = _('Wrong date interval');
             return false;
         }
-        foreach($this->lines as $wol) {
-            if(!$wol->valid($this)) {
-                //PageManager::$dbg[] = 'invalid wol ' . $wol->pos;
-                return false;
-            }
-        }
+        // foreach($this->lines as $wol) {
+        //     if(!$wol->valid($this)) {
+        //         //PageManager::$dbg[] = 'invalid wol ' . $wol->pos;
+        //         return false;
+        //     }
+        // }
 
         // intersection with others test!
         $flt = [
@@ -193,11 +194,8 @@ class WorkOrder {
                 $this->flags |= ($val & 0x200);
                 continue;
             }
-            $key = strtr($key, [
-                'ts'         => 'car'
-            ]);
             if(isset($this->$key)) {
-                $this->$key = is_object($this->$key) ? self::getProperty($key, $val->id) : $val;
+                $this->$key = self::getProperty($key, $val);
             }
         }
 
@@ -218,12 +216,12 @@ class WorkOrder {
         //     $this->lines[] = $wol;
         // }
         if(!$this->valid()) {
-            return false;
+            throw new Exception($DB->error, 400);
         }
 
         // $beg = intval($this->d_beg->format('U'));
         $end = intval($this->d_end->format('U'));
-        if($end > time() || $this->gps_id == 0) {
+        if($end > time() || $this->gps_id == $this->car->device->gps_id) {
             $this->gps_id = $this->car->device->gps_id;
         }
 
@@ -238,6 +236,7 @@ class WorkOrder {
             return true;
         }
         //PageManager::$dbg[] = 'ord notsave err ' . $DB->error;
+        throw new Exception($DB->error, 400);
         return false;
     }
 

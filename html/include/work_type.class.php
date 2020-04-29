@@ -107,7 +107,7 @@ class WorkType {
         $guid = i1C::EMPTY_GUID;
         if(property_exists($obj, 'guid')) $guid = $obj->guid;
         $ret = new WorkType($guid);
-        if($guid == i1C::EMPTY_GUID) return $ret;
+        if(!i1C::validGuid($guid)) return $ret;
         $ch = $ret->initFrom1C($obj);
         $upd = count(get_object_vars($ch)) > 0;
         if($ret->id == 0) {
