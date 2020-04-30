@@ -303,9 +303,9 @@ class CarLog {
     }
 
     public function evalOrder() {
-        $ol = CarLogItem::getOrderLine($this->id);
+        $oid = CarLogItem::getOrderLine($this->id);
         $rt = CarLogItem::getRating($this->id);
-        $this->applyOrder($ol, $rt);
+        $this->applyOrder($oid, $rt);
     }
 
     public function guessOrder() {
@@ -319,35 +319,30 @@ class CarLog {
         $this->applyOrder($oid, $rt);
     }
 
-    public function applyOrder($ol_id, $rt) {
-        // $o = WorkOrder::byLine($ol_id);
-        // $l = WorkOrderLine::get($ol_id);
+    public function applyOrder($oid, $rt) {
+        $o = new WorkOrder($oid);
         $upd = false;
-        if($this->ord_line != $ol_id) {
-            $this->ord_line = $ol_id;
+        if($this->top != $o->tech_op->id) {
+            $this->top = $o->tech_op->id;
+            $this->top_ix = $o->tech_op->ix;
             $upd = true;
         }
-        // if($this->top != $l->tech_op->id) {
-        //     $this->top = $l->tech_op->id;
-        //     $this->top_ix = $l->tech_op->ix;
-        //     $upd = true;
-        // }
-        // if($this->tr != $l->trailer->id) {
-        //     $this->tr = $l->trailer->id;
-        //     $this->tr_ix = $l->trailer->ix;
-        //     $upd = true;
-        // }
+        if($this->tr != $o->equip->id) {
+            $this->tr = $o->equip->id;
+            // $this->tr_ix = $o->equip->ix;
+            $upd = true;
+        }
         // if($this->div != $o->division->id) {
         //     $this->div = $o->division->id;
         //     $this->div_ix = $o->division->ix;
         //     $upd = true;
         // }
-        // if($o->firm->id && $this->firm != $o->firm->id) {
-        //     $this->firm = $o->firm->id;
-        //     $this->firm_ix = $o->firm->ix;
-        //     $this->firm_ixc = $o->firm->ixc;
-        //     $upd = true;
-        // }
+        if($o->firm->id && $this->firm != $o->firm->id) {
+            $this->firm = $o->firm->id;
+            $this->firm_ix = $o->firm->ix;
+            $this->firm_ixc = $o->firm->ixc;
+            $upd = true;
+        }
         if($this->rate != $rt) {
             $this->rate = $rt;
             $upd = true;

@@ -9,7 +9,7 @@ class WorkOrder {
     public $drv = 0;
     /** @var TechOperation */
     public $tech_op = null;
-    /** @var Equipment */
+    /** @var FixedAsset */
     public $equip = null;
     public $d_beg = null;
     public $d_end = null;
@@ -87,12 +87,7 @@ class WorkOrder {
             case 'tech_op': return TechOperation::get($val);
             case 'car': return Car::get($val);
             case 'user': return User::get($val);
-            case 'equip': {
-                $r = new stdClass();
-                $r->id = intval($val);
-                return $r;
-                //return EquipmentModel::get($val);
-            }
+            case 'equip': return FixedAsset::get($val);
             case 'note': return $val === 0 ? '' : $val;
         }
         return intval($val);
@@ -221,9 +216,11 @@ class WorkOrder {
 
         // $beg = intval($this->d_beg->format('U'));
         $end = intval($this->d_end->format('U'));
-        if($end > time() || $this->gps_id == $this->car->device->gps_id) {
+        if($end > time() || $this->gps_id == 0) {
             $this->gps_id = $this->car->device->gps_id;
         }
+        // until prod
+        $this->gps_id = $this->car->device->gps_id;
 
         // $this->setFlag(self::FLAG_ORDER_START_WAITING, $beg > time());
 
@@ -311,46 +308,45 @@ class WorkOrder {
         $end = 0;
         $tot = 0;
         $logs = [];
-        foreach ($this->lines as $ol) {
-            //PageManager::debug($ol, 'ol');
-            $intb = 0;
-            $inte = 0;
-            $olb = intval($ol->dt_begin->format('U'));
-            $ole = intval($ol->dt_end->format('U'));
 
-            if($beg == 0) { $intb = $olb; $beg = $olb; }
-            if($end == 0) { $inte = $ole; $end = $ole; }
+        //PageManager::debug($ol, 'ol');
+        $intb = 0;
+        $inte = 0;
+        $olb = intval($this->d_beg->format('U'));
+        $ole = intval($this->d_end->format('U'));
 
-            if($olb < $beg) $intb = $olb;
+        if($beg == 0) { $intb = $olb; $beg = $olb; }
+        if($end == 0) { $inte = $ole; $end = $ole; }
 
-            if($ole > $end) $inte = $ole;
+        if($olb < $beg) $intb = $olb;
 
-            if($intb && !$inte) $inte = $beg;
-            if($inte && !$intb) $intb = $end;
+        if($ole > $end) $inte = $ole;
 
-            if($intb && $inte) {
-                $tot += CarLogItem::setOrderLine($this->car->id, $ol, $intb, $inte);
-                $logs = CarLog::appendLogs($logs, $this->car->id, $intb, $inte);
-                $beg = min($beg, $intb);
-                $end = max($end, $inte);
-            }
+        if($intb && !$inte) $inte = $beg;
+        if($inte && !$intb) $intb = $end;
+
+        if($intb && $inte) {
+            $tot += CarLogItem::setOrderLine($this->car->id, $this, $intb, $inte);
+            $logs = CarLog::appendLogs($logs, $this->car->id, $intb, $inte);
+            $beg = min($beg, $intb);
+            $end = max($end, $inte);
         }
         //PageManager::debug($tot, 'tot');
         //PageManager::debug($logs, 'logs');
-        if($tot > 0) {
+        // if($tot > 0) {
             foreach ($logs as $lid) {
                 $cl = new CarLog($lid);
                 $cl->evalOrder();
             }
-        } else {
-            if(count($this->lines) && $logs) {
-                $ol = $this->lines[0];
-                foreach ($logs as $lid) {
-                    $cl = new CarLog($lid);
-                    $cl->applyOrder($ol->id, $cl->rate);
-                }
-            }
-        }
+        // } else {
+        //     if(count($this->lines) && $logs) {
+        //         $ol = $this->lines[0];
+        //         foreach ($logs as $lid) {
+        //             $cl = new CarLog($lid);
+        //             $cl->applyOrder($ol->id, $cl->rate);
+        //         }
+        //     }
+        // }
     }
 
     public static function timeLog($msg, $tm) {

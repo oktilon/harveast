@@ -1,13 +1,12 @@
 <?php
-class WorkType {
+class ProductionRate {
     public $id              = 0;
     public $guid            = i1C::EMPTY_GUID;
     public $name            = '';
-    public $measure_unit    = null;
     public $parent          = null;
-    public $processing_type = null;
-    public $work_group      = null;
-    public $techop         = null;
+    public $work_type       = null;
+    public $vehicle_model   = null;
+    public $equipment_model = null;
     public $active          = 0;
     public $upd             = null;
 
@@ -35,7 +34,7 @@ class WorkType {
             }
         }
         if($fld) {
-            $q = $DB->prepare("SELECT * FROM work_types WHERE $fld = :v")
+            $q = $DB->prepare("SELECT * FROM production_rates WHERE $fld = :v")
                     ->bind('v', $val)->execute_row();
             if($q) {
                 $arg = $q;
@@ -52,11 +51,10 @@ class WorkType {
         switch($key) {
             case 'guid':
             case 'name': return $val;
-            case 'parent': return WorkTypeParent::get($val);
-            case 'processing_type': return ProcessingType::get($val);
-            case 'work_group': return WorkGroup::get($val);
-            case 'techop': return TechOperation::get($val);
-            case 'measure_unit': return MeasureUnit::get($val);
+            case 'parent': return ProductionRateParent::get($val);
+            case 'work_type': return WorkType::get($val);
+            case 'vehicle_model': return VehicleModel::get($val);
+            case 'equipment_model': return EquipmentModel::get($val);
             case 'upd': return new DateTime($val === 0 ? '2000-01-01' : $val);
             case 'active':
                 $v = $val;
@@ -71,7 +69,7 @@ class WorkType {
         self::$m_upd = false;
         $guid = i1C::EMPTY_GUID;
         if(property_exists($obj, 'guid')) $guid = $obj->guid;
-        $ret = new WorkType($guid);
+        $ret = new ProductionRate($guid);
         if(!i1C::validGuid($guid)) return $ret;
         $ch = $ret->initFrom1C($obj);
         $upd = count(get_object_vars($ch)) > 0;
@@ -81,7 +79,7 @@ class WorkType {
         if($upd) {
             self::$m_upd = true;
             $ret->save();
-            Changes::write('work_types', $ret, $ch);
+            Changes::write('production_rates', $ret, $ch);
         }
         return $ret;
     }
@@ -89,9 +87,7 @@ class WorkType {
     private function initFrom1C($obj) {
         $ch = new stdClass();
         $init = [
-            'work_group'      => ['WorkGroup', ''],
-            'processing_type' => ['ProcessingType', ''],
-            'parent_name'     => ['WorkTypeParent', 'parent'],
+            'parent_name'     => ['ProductionRateParent', 'parent'],
         ];
 
         foreach($obj as $key => $val) {
@@ -106,8 +102,10 @@ class WorkType {
             } elseif(property_exists($this, $key)) {
                 $nv = self::getProperty($key, $val);
                 if(is_object($nv)) {
-                    if($key == 'measure_unit' && i1C::validGuid($val) && !i1C::validGuid($nv->guid)) {
-                        $nv = MeasureUnit::init((object)['guid' => $val, 'name' => 'unk_wt']);
+                    if($key == 'vehicle_model' && i1C::validGuid($val) && !i1C::validGuid($nv->guid)) {
+                        $nv = VehicleModel::init((object)['guid' => $val, 'name' => 'unk_prod_rate']);
+                    } elseif($key == 'equipment_model' && i1C::validGuid($val) && !i1C::validGuid($nv->guid)) {
+                        $nv = EquipmentModel::init((object)['guid' => $val, 'name' => 'unk_prod_rate']);
                     }
                     if($this->$key->id != $nv->id) {
                         $this->$key = $nv;
@@ -125,7 +123,7 @@ class WorkType {
     }
 
     public function save() {
-        $t = new SqlTable('work_types', $this, ['upd']);
+        $t = new SqlTable('production_rates', $this, ['upd']);
         return $t->save($this);
     }
 
@@ -150,7 +148,7 @@ class WorkType {
 
     public static function get($id) {
         if(!isset(self::$cache[$id])) {
-            self::$cache[$id] = new WorkType($id);
+            self::$cache[$id] = new ProductionRate($id);
         }
         return self::$cache[$id];
     }
@@ -191,7 +189,7 @@ class WorkType {
         $order = $ord ? "ORDER BY $ord" : '';
         $limit = $lim ? "LIMIT $lim" : '';
         $calc  = $lim ? "SQL_CALC_FOUND_ROWS" : '';
-        $DB->prepare("SELECT $calc $flds FROM work_types $add $order $limit");
+        $DB->prepare("SELECT $calc $flds FROM production_rates $add $order $limit");
         foreach($par as $k => $v) {
             $DB->bind($k, $v);
         }
@@ -201,7 +199,7 @@ class WorkType {
             self::$total = intval($DB->select_scalar("SELECT FOUND_ROWS()"));
         }
         foreach($rows as $row) {
-            $it = $flds == '*' ? new WorkType($row) : ($fld ? intval($row[$fld]) : $row);
+            $it = $flds == '*' ? new ProductionRate($row) : ($fld ? intval($row[$fld]) : $row);
             $ret[] = $json ? $it->getJson() : $it;
         }
         return $ret;

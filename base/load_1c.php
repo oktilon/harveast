@@ -26,14 +26,16 @@ Info("Started {$add}");
 
 $last_id = 0;
 $q = true;
+$dto = '';
 
 while($q) {
-    $q = $DB->prepare("SELECT id, obj FROM st_buffer_1c
+    $q = $DB->prepare("SELECT id, obj, dt FROM st_buffer_1c
                         WHERE parse = 0 AND id > :lid
                         LIMIT 1")
                 ->bind('lid', $last_id)
                 ->bindColumn(1, $last_id, PDO::PARAM_INT)
                 ->bindColumn(2, $lob, PDO::PARAM_LOB)
+                ->bindColumn(3, $dto, PDO::PARAM_STR)
                 ->execute();
 
     if($q = $DB->fetchRow(PDO::FETCH_BOUND)) {
@@ -41,6 +43,8 @@ while($q) {
             // $txt = stream_get_contents($lob);
             $txt = $lob;
             $obj = json_decode($txt);
+            $odt = new DateTime($dto);
+            $oh = $odt->format('H');
             $err = [];
             $parsed = false;
             if(!$obj) {
@@ -58,6 +62,8 @@ while($q) {
                     case 'vehicle_models': $cls = 'VehicleModel'; break;
                     case 'techops': $cls = 'TechOperation'; break;
                     case 'fixed_assets': $cls = 'FixedAsset'; break;
+                    case 'work_types': $cls = 'WorkType'; break;
+                    case 'production_rates': $cls = 'ProductionRate'; break;
                 }
                 if($cls && method_exists($cls, 'init')) {
                     $cnt = count($lst);

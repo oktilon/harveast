@@ -50,7 +50,7 @@ class VehicleModel {
     private static function getProperty($key, $val) {
         switch($key) {
             case 'id':
-            case 'flags':
+            case 'flags': return intval($val);
             case 'upd': return new DateTime($val);
             case 'nomen': return Nomenclature::get($val);
             case 'parent': return VehicleModelParent::get($val);

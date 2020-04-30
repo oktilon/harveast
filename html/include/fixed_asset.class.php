@@ -15,7 +15,9 @@ class FixedAsset {
     public $inv = '';
     public $category = null;
     public $org = '';
+    /** @var VehicleModel */
     public $model_vehicle = null;
+    /** @var EquipmentModel */
     public $model_equip = null;
     public $upd = null;
 
@@ -130,7 +132,7 @@ class FixedAsset {
 
         foreach($obj as $key => $val) {
             if(property_exists($this, $key)) {
-                $nv = self::getProperty($key, $val);
+                $nv = self::getProperty($key, trim($val));
                 if($this->$key != $nv) {
                     $this->$key = $nv;
                     $ch->$key = $nv;
@@ -187,10 +189,11 @@ class FixedAsset {
 
     public function getSimple() { return $this->getJson(); }
 
-    public static function getJson($simple = true) {
+    public function getJson($simple = true) {
         $ret = new stdClass();
         $arr = ['id', 'name'];
         foreach($this as $k => $v) {
+            if($simple && !in_array($k, $arr)) continue;
             $val = is_object($v) ? (method_exists($v, 'getJson') ? $v->getJson() : property_exists($v, 'id') ? $v->id : 'obj') : $v;
             $ret->$k = $val;
         }

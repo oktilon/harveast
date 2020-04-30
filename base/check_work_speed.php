@@ -93,9 +93,7 @@ try {
         $cid = $ord->car->id;
         $fid = $ord->firm->id;
         $tid = $ord->car->ts_type->id;
-        $ord_line = null;
-        $agl = new AggregationList();
-        if($cid == 257) $agl->hd_width = 16800;
+        $em = $ord->equip->model_equip;
 
         $msg_oid = sprintf("%d (%d of %d)", $oid, $iRow+1, $ord_cnt);
 
@@ -149,7 +147,7 @@ try {
             //     $plog ? $plog->id : 0,
             //     $plog ? $plog->geo : 0);
             if($log == null) {
-                $log = new OrderLog($ord, $ord_line, $pnt, $agl);
+                $log = new OrderLog($ord, $pnt, $em);
                 $log->save(false);
                 $logs[] = $log;
                 echo "[g:{$log->geo}]";

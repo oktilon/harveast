@@ -113,7 +113,7 @@ class OrderLog {
     * @param integer СКРИПТ = id проверяемой геозоны
     * @return OrderLog
     */
-    public function __construct($arg = 0, $line = null, CarLogPoint $point = null, AggregationList $agl = null) {
+    public function __construct($arg = 0, $point = null, EquipmentModel $em = null) {
         global $DB;
         $this->dt_beg = new DateTime('2000-01-01');
         $this->dt_end = new DateTime('2000-01-01');
@@ -130,7 +130,7 @@ class OrderLog {
             $this->ord_line = 0;
             $this->techop   = $arg->tech_op->id;
             $this->top_cond = 0;
-            $this->top_wd   = $agl->hd_width;
+            $this->top_wd   = $em->wd;
             $this->flags    = 0;
             $this->spd_min  = 0; //$agl->spd_min;
             $this->spd_max  = 0; //$agl->spd_max;
@@ -420,7 +420,8 @@ class OrderLog {
             WorkOrder::setInvalidGeo($this->ord);
         }
 
-        $jnt = $fast_mode ? $ret : $this->jnt_area;
+        // $jnt = $fast_mode ? $ret : $this->jnt_area;
+        $jnt = $ret;
 
         $DB->prepare("UPDATE gps_order_log
                         SET ord_area = :a,
