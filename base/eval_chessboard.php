@@ -87,7 +87,8 @@ if($cars) {
 try {
 
     if(!$devs) {
-        $lckFile = str_replace('.php', "_{$part}.lck", $_SERVER['SCRIPT_FILENAME']);
+        $ext = $part ? "_{$part}.lck" : ".lck";
+        $lckFile = str_replace('.php', $ext, $_SERVER['SCRIPT_FILENAME']);
         if(!GlobalMethods::pidLock($lckFile, 10800, ADMIN_CHAT, [], 7200)) die();
     }
 

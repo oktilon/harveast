@@ -101,7 +101,7 @@ try {
         if($info) Info($info);
         $info = '';
 
-        if(!$ord->tech_op->isFieldOperation()) {
+        if(!$ord->tech_op->isValidOperation()) {
             $ord->finalNoFldWork();
             Info(sprintf("Ord: $msg_oid without fieldworks [0x%X]", $ord->flags));
             $itBeg = 0;

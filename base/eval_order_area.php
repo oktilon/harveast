@@ -101,9 +101,9 @@ try {
 
     foreach($orders as $iRow => $ord) { // По каждому наряду
         $ord_line = null;
-        if(!$ord->tech_op->isFieldOperation()) {
+        if(!$ord->tech_op->isValidOperation()) {
             $ord->finalAreaNoFldWork();
-            Info(sprintf("Ord: %d without fieldworks [0x%X]", $ord->id, $ord->flags));
+            Info(sprintf("Ord: %d without valid techop [0x%X]", $ord->id, $ord->flags));
             continue;
         }
 
