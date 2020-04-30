@@ -137,6 +137,8 @@ class OrderLog {
             $this->dt_beg->setTimestamp($point->dt);
             $this->dt_end->setTimestamp($point->dt);
             $this->readMyGeoParameters();
+
+            if($this->top_wd < 1) $this->top_wd = 6000;
             return;
         }
 

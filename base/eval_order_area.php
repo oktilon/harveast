@@ -108,6 +108,7 @@ try {
         }
 
         $wd = $ord->equip->model_equip->wd;
+        if($wd < 1) $wd = 6000;
 
         if($wd == 0) {
             $ord->finalAreaNoWidth();
