@@ -444,6 +444,7 @@ class WorkOrder {
             }
             $ret->$key = $val;
         }
+        $ret->parse = $this->getParsingPercent();
         return $ret;
     }
 

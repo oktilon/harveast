@@ -15,14 +15,14 @@ MAILTO = ""
 12,27,42,57	*	*	*	*	php /var/www/html/public/base/eval_chessboard.php -p 7
 14,29,44,59	*	*	*	*	php /var/www/html/public/base/eval_chessboard.php -p 8
 
-*/8	*	*	*	*	php /var/www/html/public/base/check_work_speed.php -p 1
-1-59/8	*	*	*	*	php /var/www/html/public/base/check_work_speed.php -p 2
-2-59/8	*	*	*	*	php /var/www/html/public/base/check_work_speed.php -p 3
-3-59/8	*	*	*	*	php /var/www/html/public/base/check_work_speed.php -p 4
-4-59/8	*	*	*	*	php /var/www/html/public/base/check_work_speed.php -p 5
-5-59/8	*	*	*	*	php /var/www/html/public/base/check_work_speed.php -p 6
-6-59/8	*	*	*	*	php /var/www/html/public/base/check_work_speed.php -p 7
-7-59/8	*	*	*	*	php /var/www/html/public/base/check_work_speed.php -p 8
+*	*	*	*	*	php /var/www/html/public/base/check_work_speed.php
+#1-59/8	*	*	*	*	php /var/www/html/public/base/check_work_speed.php -p 2
+#2-59/8	*	*	*	*	php /var/www/html/public/base/check_work_speed.php -p 3
+#3-59/8	*	*	*	*	php /var/www/html/public/base/check_work_speed.php -p 4
+#4-59/8	*	*	*	*	php /var/www/html/public/base/check_work_speed.php -p 5
+#5-59/8	*	*	*	*	php /var/www/html/public/base/check_work_speed.php -p 6
+#6-59/8	*	*	*	*	php /var/www/html/public/base/check_work_speed.php -p 7
+#7-59/8	*	*	*	*	php /var/www/html/public/base/check_work_speed.php -p 8
 
-*/5	*	*	*	*	php /var/www/html/public/base/eval_order_area.php
+*/2	*	*	*	*	php /var/www/html/public/base/eval_order_area.php
 #*/15	*	*	*	*	php /var/www/html/public/base/eval_order_joint.php
