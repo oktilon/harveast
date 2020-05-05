@@ -144,9 +144,21 @@ class CarCache {
         if(self::$is_debug) $tms = self::debug($tms, 'getApi');
         $this->stop = false;
         $tm_begin = $this->tm - self::$oldPointsGap;
+        CarLogPoint::readCache($this->id, $tm_begin, $now);
         $ret = $api->getMessages($this->id, $tm_begin, $fin);
         if(self::$is_debug) $tms = self::debug($tms, "getMessages", $ret);
+        while($ret) {
+            $msg = array_shift($ret);
+            $ttm = WialonApi::fromWialonTime($msg->t);
+            if($ttm <= $this->tm) {
+                CarLogPoint::checkPoint($msg, $this->id, $ttm);
+            } else {
+                array_unshift($ret, $msg);
+                break;
+            }
+        }
         if(!$ret) {
+            $tm_begin = $this->tm;
             if($api->err) {
                 $this->stop = $api->needStop();
                 if($api->needRestart() && !$loop) {
@@ -192,7 +204,6 @@ class CarCache {
             }
         }
         self::$points = count($ret);
-        CarLogPoint::readCache($this->id, $tm_begin, $fin);
 
         echo self::$points . "pts, \033[0;34m" . date('Y-m-d H:i:s', $tm_begin) . "\033[0m > \033[0;32m" . date('Y-m-d H:i:s', $this->tm) . "\033[0m - \033[0;32m" . date('Y-m-d H:i:s', $fin) . "\033[0m: ";
         $pl = null;

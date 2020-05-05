@@ -81,11 +81,15 @@ class CarLogPoint {
         return count(self::$cachePoints);
     }
 
+    public static function checkPoint(WialonMessage $msg, $iid, $tms) {
+        if(in_array($tms, self::$cachePoints)) return;
+        self::calcPoint($msg, $iid);
+    }
+
     public static function calcPoint(WialonMessage $msg, $iid) {
         $lst = GeoFence::findPointFieldFast($msg->pos);
         $gid = $lst ? array_shift($lst) : 0;
         self::addPoint($msg, $gid, $iid);
-
     }
 
     public static function addPoint(WialonMessage $msg, $gid, $iid) {

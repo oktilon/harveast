@@ -91,6 +91,7 @@ class WorkType {
         $init = [
             'work_group'      => ['WorkGroup', ''],
             'processing_type' => ['ProcessingType', ''],
+            'measure_unit'    => ['MeasureUnit', ''],
             'parent_name'     => ['WorkTypeParent', 'parent'],
         ];
 
@@ -106,9 +107,6 @@ class WorkType {
             } elseif(property_exists($this, $key)) {
                 $nv = self::getProperty($key, $val);
                 if(is_object($nv)) {
-                    if($key == 'measure_unit' && i1C::validGuid($val) && !i1C::validGuid($nv->guid)) {
-                        $nv = MeasureUnit::init((object)['guid' => $val, 'name' => 'unk_wt']);
-                    }
                     if($this->$key->id != $nv->id) {
                         $this->$key = $nv;
                         $ch->$key = $nv->id;

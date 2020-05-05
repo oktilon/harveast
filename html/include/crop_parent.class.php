@@ -1,5 +1,5 @@
 <?php
-class MeasureUnit {
+class CropParent {
     public $id     = 0;
     public $name   = '';
 
@@ -20,7 +20,7 @@ class MeasureUnit {
             $fld = 'name';
         }
         if($fld) {
-            $q = $DB->prepare("SELECT * FROM measure_units WHERE $fld = :v")
+            $q = $DB->prepare("SELECT * FROM crop_parents WHERE $fld = :v")
                     ->bind('v', $val)->execute_row();
             if($q) {
                 $arg = $q;
@@ -41,8 +41,8 @@ class MeasureUnit {
     }
 
     public static function init($name) {
-        if(empty(trim($name))) return new MeasureUnit();
-        $ret = new MeasureUnit($name);
+        if(empty(trim($name))) return new CropParent();
+        $ret = new CropParent($name);
         if($ret->id) return $ret;
         $ret->name = $name;
         $ret->save();
@@ -50,7 +50,7 @@ class MeasureUnit {
     }
 
     public function save() {
-        $t = new SqlTable('measure_units', $this);
+        $t = new SqlTable('crop_parents', $this);
         $ret = $t->save($this);
     }
 
@@ -76,11 +76,11 @@ class MeasureUnit {
      *
      * @param int $id unit Id
      *
-     * @return MeasureUnit
+     * @return CropParent
      */
     public static function get($id) {
         if(!isset(self::$cache[$id])) {
-            self::$cache[$id] = new MeasureUnit($id);
+            self::$cache[$id] = new CropParent($id);
         }
         return self::$cache[$id];
     }
@@ -107,7 +107,7 @@ class MeasureUnit {
         $order = $ord ? "ORDER BY $ord" : '';
         $limit = $lim ? "LIMIT $lim" : '';
         $calc  = $lim ? "SQL_CALC_FOUND_ROWS" : '';
-        $DB->prepare("SELECT $calc $flds FROM measure_units $add $order $limit");
+        $DB->prepare("SELECT $calc $flds FROM crop_parents $add $order $limit");
         foreach($par as $k => $v) {
             $DB->bind($k, $v);
         }
@@ -117,7 +117,7 @@ class MeasureUnit {
             $total = intval($DB->select_scalar("SELECT FOUND_ROWS()"));
         }
         foreach($rows as $row) {
-            $ret[] = $flds == '*' ? new MeasureUnit($row) : ($flds == 'id' ? intval($row['id']) : $row);
+            $ret[] = $flds == '*' ? new CropParent($row) : ($flds == 'id' ? intval($row['id']) : $row);
         }
         self::$total = $total;
         return $ret;

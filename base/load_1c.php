@@ -35,7 +35,7 @@ foreach(i1C::$item_list as $it_key => $cls) {
     $q = true;
     $dto = '';
     if($flt && !in_array($it_key, $flt)) continue;
-    Info(sprintf('Load: %s [$s]', $it_key, $cls));
+    Info(sprintf('Load: %s [%s]', $it_key, $cls));
     $it_upd = 0;
     $it_cnt = 0;
 
@@ -55,13 +55,23 @@ foreach(i1C::$item_list as $it_key => $cls) {
                 $txt = $lob;
                 $obj = json_decode($txt);
                 $odt = new DateTime($dto);
-                Info(sprintf('Rec: %d, at $s', $last_id, $odt->format('Y-m-d H:i:s')));
                 $err = [];
+                // Info(sprintf('Rec: %d, at %s', $last_id, $odt->format('Y-m-d H:i:s')));
                 $parsed = false;
                 if(!$obj) {
                     throw new Exception('json_decode error ' . json_last_error_msg());
                 }
                 foreach($obj as $k => $lst) {
+                    if($k == 'category_tab') {
+                        $DB->prepare("UPDATE st_buffer_1c
+                                        SET parse = 3
+                                            , err = :err
+                                        WHERE id = :id")
+                            ->bind('err', 'Unused item')
+                            ->bind('id', $last_id)
+                            ->execute();
+                        continue;
+                    }
                     if($k !== $it_key) continue;
 
                     if($cls && method_exists($cls, 'init')) {

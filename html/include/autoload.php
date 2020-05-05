@@ -23,10 +23,6 @@ function autoloadBase ($className){
     $fileName = strtolower($className) . '.class.php';
     if(autoloadTryFile($fileName)) return;
 
-    if(JSON::loadClass($className)) return;
-
-    if(JSON::loadClass(strtolower($className))) return;
-
     // Try SplitName by capitals
     $classParts = array('');
     $cur_part   = 0;
@@ -47,6 +43,10 @@ function autoloadBase ($className){
     $clsName = strtolower(implode('_', $classParts));
     $fileName = $fl . $clsName . '.class.php';
     if(autoloadTryFile($fileName)) return;
+
+    if(JSON::loadClass($className)) return;
+
+    if(JSON::loadClass(strtolower($className))) return;
 
     if(JSON::loadClass($clsName)) return;
 

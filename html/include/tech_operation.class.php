@@ -105,12 +105,17 @@ class TechOperation {
         $flg     = 0;
 
         foreach($obj as $key => $val) {
-            if(property_exists($this, $key) || $key == 'measure_unit') {
-                if($key == 'measure_unit') $key = 'unit';
+            if(property_exists($this, $key)) {
                 $nv = self::getProperty($key, $val);
                 if($this->$key != $nv) {
                     $this->$key = $nv;
                     $ch->$key = $nv;
+                }
+            } elseif($key == 'measure_unit') {
+                $unit = MeasureUnit::init($val);
+                if($this->unit->id != $unit->id) {
+                    $this->unit = $unit;
+                    $ch->unit = $unit->id;
                 }
             } elseif($key == 'parent_name') {
                 $nv = TechOperationFolder::init($val);

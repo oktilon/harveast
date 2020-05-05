@@ -47,7 +47,7 @@ class Nomenclature {
 
     public static function init($obj) {
         $guid = is_object($obj) && property_exists($obj, 'nomen_guid') ? $obj->nomen_guid :
-                is_array($obj) && key_exists('nomen_guid', $obj) ? $obj['nomen_guid'] : '';
+                (is_array($obj) && key_exists('nomen_guid', $obj) ? $obj['nomen_guid'] : '');
         if(!i1C::validGuid($guid)) $guid = i1C::EMPTY_GUID;
         $ret = new Nomenclature($guid);
         if(!i1C::validGuid($guid)) return $ret;

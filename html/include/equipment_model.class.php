@@ -109,7 +109,7 @@ class EquipmentModel {
             }
         }
 
-        $nom = Nomenclature::init($obj);
+        $nom = Nomenclature::init($extra);
         if($this->nomen->id != $nom->id) {
             $this->nomen = $nom;
             $ch->nomen = $nom->id;

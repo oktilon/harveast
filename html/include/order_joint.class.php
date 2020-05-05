@@ -674,12 +674,12 @@ class OrderJoint {
         return $oj;
     }
 
-    public static function findJoints($dt_eval = '', $fast = false, $geo_only) {
+    public static function findJoints($dt_eval = '', $geo_only) {
         global $DB;
         $dt = $dt_eval ? new DateTime($dt_eval) : new DateTime();
 
-        $flagArea = WorkOrder::finalOrderFlag($fast);
-        $flagLog  = $fast ? WorkOrder::FLAG_ORDER_LOG_FAST : WorkOrder::FLAG_ORDER_LOG;
+        $flagArea = WorkOrder::FLAG_ORDER_AREA;
+        $flagLog  = WorkOrder::FLAG_ORDER_LOG;
 
         $ord_flg_test = WorkOrder::allErrors() |
                         WorkOrder::FLAG_ORDER_DEL |
