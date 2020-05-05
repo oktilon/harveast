@@ -13,6 +13,7 @@ class CarCache {
     public static $error = '';
     public static $debug = [];
     public static $is_debug = false;
+    public static $is_unlimit = false;
     public static $points = 0;
     public $stop = false;
 
@@ -129,7 +130,7 @@ class CarCache {
         $now = time();
         $fin = $now;
         $old = false;
-        if(($fin - $this->tm) > self::$maxStep) {
+        if(($fin - $this->tm) > self::$maxStep && !self::$is_unlimit) {
             $fin = $this->tm + self::$maxStep;
             $old = true;
             if(self::$is_debug) self::$debug[] = "old,fin=" . date('Y-m-d H:i:s', $fin);

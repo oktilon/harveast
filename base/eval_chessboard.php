@@ -90,6 +90,8 @@ try {
         $ext = $part ? "_{$part}.lck" : ".lck";
         $lckFile = str_replace('.php', $ext, $_SERVER['SCRIPT_FILENAME']);
         if(!GlobalMethods::pidLock($lckFile, 10800, ADMIN_CHAT, [], 7200)) die();
+    } else {
+        CarCache::$is_unlimit = true;
     }
 
     $cars = CarCache::getCache($devs, $part);
