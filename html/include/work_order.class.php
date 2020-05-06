@@ -42,19 +42,19 @@ class WorkOrder {
     public  static $err   = [];
 
     public static $flags_nm = [
-        ['f'=>self::FLAG_ORDER_PTS,           'n'=>'Points finished',            'i'=>'far fa-dot-circle',     'c'=>'#034605'],
-        ['f'=>self::FLAG_ORDER_LOG,           'n'=>'Parsed',                     'i'=>'far fa-crop',           'c'=>'#034605'],
-        ['f'=>self::FLAG_ORDER_AREA,          'n'=>'Area',                       'i'=>'far fa-calculator',     'c'=>'#034605'],
-        ['f'=>self::FLAG_ORDER_JOINT,         'n'=>'Joint area',                 'i'=>'far fa-check-square',   'c'=>'#034605'],
-        ['f'=>self::FLAG_ORDER_RECALC,        'n'=>'Recalculation',              'i'=>'far fa-sync',           'c'=>'#007bff'],
-        ['f'=>self::FLAG_ORDER_DBL_TRACK,     'n'=>'Double track',               'i'=>'far fa-clone'      ,    'c'=>'#753aff'],
-        ['f'=>self::FLAG_ORDER_FUTURE_YEAR,   'n'=>'Next year',                  'i'=>'far fa-hand-point-up',  'c'=>'-#3277a8'],
-        ['f'=>self::FLAG_ORDER_INVALID_GEO,   'n'=>'Invalid geometry',           'i'=>'fas fa-infinity',       'c'=>'#A40000'],
-        ['f'=>self::FLAG_ORDER_NO_GPS,        'n'=>'No Gps',                     'i'=>'far fa-warning',        'c'=>'#CE5C00'],
-        ['f'=>self::FLAG_ORDER_NO_FLDWORK,    'n'=>'No valid operation',         'i'=>'far fa-car',            'c'=>'#555753'],
-        ['f'=>self::FLAG_ORDER_NO_WIDTH,      'n'=>'Operation width is unknown', 'i'=>'far fa-exclamation-circle', 'c'=>'#A40000'],
-        ['f'=>self::FLAG_ORDER_NO_MSGS,       'n'=>'No messages',                'i'=>'far fa-times-circle',   'c'=>'#A40000'],
-        ['f'=>self::FLAG_ORDER_DEL,           'n'=>'Deleted',                    'i'=>'far fa-trash',          'c'=>'#ff0000'],
+        ['f'=>self::FLAG_ORDER_PTS,           'n'=>'Points finished',            'p'=>1, 'i'=>'far fa-dot-circle',     'c'=>'#034605'],
+        ['f'=>self::FLAG_ORDER_LOG,           'n'=>'Parsed',                     'p'=>2, 'i'=>'far fa-crop',           'c'=>'#034605'],
+        ['f'=>self::FLAG_ORDER_AREA,          'n'=>'Area',                       'p'=>3, 'i'=>'far fa-calculator',     'c'=>'#034605'],
+        ['f'=>self::FLAG_ORDER_JOINT,         'n'=>'Joint area',                 'p'=>4, 'i'=>'far fa-check-square',   'c'=>'#034605'],
+        ['f'=>self::FLAG_ORDER_RECALC,        'n'=>'Recalculation',              'p'=>5, 'i'=>'far fa-sync',           'c'=>'#007bff'],
+        ['f'=>self::FLAG_ORDER_DBL_TRACK,     'n'=>'Double track',               'p'=>0, 'i'=>'far fa-clone'      ,    'c'=>'#753aff'],
+        ['f'=>self::FLAG_ORDER_FUTURE_YEAR,   'n'=>'Next year',                  'p'=>0, 'i'=>'far fa-hand-point-up',  'c'=>'-#3277a8'],
+        ['f'=>self::FLAG_ORDER_INVALID_GEO,   'n'=>'Invalid geometry',           'p'=>0, 'i'=>'fas fa-infinity',       'c'=>'#A40000'],
+        ['f'=>self::FLAG_ORDER_NO_GPS,        'n'=>'No Gps',                     'p'=>9, 'i'=>'far fa-warning',        'c'=>'#CE5C00'],
+        ['f'=>self::FLAG_ORDER_NO_FLDWORK,    'n'=>'No valid operation',         'p'=>9, 'i'=>'far fa-car',            'c'=>'#555753'],
+        ['f'=>self::FLAG_ORDER_NO_WIDTH,      'n'=>'Operation width is unknown', 'p'=>9, 'i'=>'far fa-exclamation-circle', 'c'=>'#A40000'],
+        ['f'=>self::FLAG_ORDER_NO_MSGS,       'n'=>'No messages',                'p'=>9, 'i'=>'far fa-times-circle',   'c'=>'#A40000'],
+        ['f'=>self::FLAG_ORDER_DEL,           'n'=>'Deleted',                    'p'=>0, 'i'=>'far fa-trash',          'c'=>'#ff0000'],
     ];
 
     public function __construct($arg = 0) {
