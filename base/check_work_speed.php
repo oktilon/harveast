@@ -58,8 +58,8 @@ try {
     $flt = [
         ['(o.flags & :log) = 0', 'log', WorkOrder::FLAG_ORDER_LOG],
         'o.gps_id > 0',
-        ['o.d_beg <= :d', 'd', $now],
-        'd.tm > UNIX_TIMESTAMP(o.d_end)',
+        'o.d_beg <= DATE_ADD(NOW(), INTERVAL 30 MINUTE)',
+        '(d.tm > UNIX_TIMESTAMP(o.d_end) OR DATE_ADD(o.d_end, INTERVAL 1 HOUR) < NOW())',
         ['join_devices', 'd.tm']
     ];
     if($part_div > 0) {
