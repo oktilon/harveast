@@ -438,10 +438,10 @@ class WorkOrder {
             if(is_object($val) && method_exists($val, 'getJson')) {
                 $val = $val->getJson();
             }
-            if($key == 'lines') {
-                $val = [];
-                if($this->lines) foreach($this->lines as $line) $val[] = $line->getSimple();
-            }
+            // if($key == 'lines') {
+            //     $val = [];
+            //     if($this->lines) foreach($this->lines as $line) $val[] = $line->getSimple();
+            // }
             $ret->$key = $val;
         }
         $ret->parse = $this->getParsingPercent();

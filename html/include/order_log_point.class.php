@@ -118,7 +118,7 @@ class OrderLogPoint {
     public static function getLastTime($iid) {
         global $PG;
         return intval($PG->prepare("SELECT MAX(dt)
-                            FROM order_log_point
+                            FROM gps_points
                             WHERE id = :iid")
                 ->bind('iid', $iid)
                 ->execute_scalar());
