@@ -1,4 +1,4 @@
-<?php 
+<?php
 	require_once '../sess.php';
 
 	$user_id = 0;
@@ -10,33 +10,36 @@
 		JSON::log_server('',0,"error");
 		die;
 	}
-	 
+
 	if($user_id>0){
-		
+
 		$DB->prepare("
 			SELECT *,
-					UNIX_TIMESTAMP(dt_update) as dt 
-			FROM hrv_spr_modules 
-			WHERE 	module = :module  OR 
-					module = md5(:module) 
-			ORDER BY id 
+					UNIX_TIMESTAMP(dt_update) as dt
+			FROM hrv_spr_modules
+			WHERE 	module = :module  OR
+					module = md5(:module)
+			ORDER BY id
 			DESC LIMIT 1;
 		");
-		
+
 	}else{
-		
+
 		$DB->prepare("
 			SELECT 	*,
-					UNIX_TIMESTAMP(dt_update) as dt 
-			FROM 	hrv_spr_modules 
-			WHERE 	(module = :module  OR module = md5(:module)) AND 
+					UNIX_TIMESTAMP(dt_update) as dt
+			FROM 	hrv_spr_modules
+			WHERE 	(module = :module  OR module = md5(:module)) AND
 					TRIM(dm_roles) = '999999'
-			ORDER BY id 
+			ORDER BY id
 			DESC LIMIT 1;
-		");	
+		");
 	}
 	$DB->bind('module',$_POST['m']);
 	$q = $DB->execute_all();
+
+	$dt = isset($_POST['dt']) ? intval($_POST['dt']) : 0;
+	if(defined('ALT_MODULES')) GlobalMethods::altLoadJs($_POST['m'], $dt);
 
 	if(!$q){
 		echo json_encode(array("status"=>"error"));
@@ -44,8 +47,8 @@
 		die;
 	}
 
-	
-	
+
+
 	if($user_id>0){
 		if($q[0]['dm_roles']!=''){
 			$r = $DB->select("SELECT * FROM {TABLE_RIGHTS} WHERE user_id = {$user_id} AND right_id IN ({$q[0]['dm_roles']})");
@@ -68,11 +71,11 @@
 		}
 	}
 
-		
+
 
 	ini_set('zip.output_compression_level', 9);
 	ob_start('ob_gzhandler');
-	
+
 	if(count($q)>0){
 		if(floatval($_POST['dt'])==floatval($q[0]['dt'])){
 			$q[0]['function'] = "";

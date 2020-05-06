@@ -21,6 +21,13 @@ class WorkOrder {
     public $gps_id = 0;
     public $move_dst = 0;
     public $note = '';
+    // Indexes
+    public $car_ix = 0;
+    public $car_in = 0;
+    public $car_it = 0;
+    public $firm_ix = 0;
+    public $top_ix = 0;
+    public $eq_ix = 0;
 
     const FLAG_ORDER_PTS           = 0x1;
     const FLAG_ORDER_LOG           = 0x2;
@@ -193,6 +200,12 @@ class WorkOrder {
                 $this->$key = self::getProperty($key, $val);
             }
         }
+        $this->car_ix = $this->car->ix;
+        $this->car_in = $this->car->ixn;
+        $this->car_it = $this->car->ixt;
+        $this->firm_ix = $this->firm_ix;
+        $this->top_ix = $this->tech_op->ix;
+        $this->eq_ix = $this->equip->ix;
 
         // reset all errors
         $err = $this->allErrors();
@@ -301,6 +314,16 @@ class WorkOrder {
                 ->execute();
         }
         return true;
+    }
+
+    public static function techopFilter($txt) {
+        if($txt == '') return false;
+        return TechOperation::searchFieldworks($txt, true, false, false);
+    }
+
+    public static function equipFilter($txt) {
+        if($txt == '') return false;
+        return FixedAsset::searchEquipment($txt);
     }
 
     public function setToChessboard() {

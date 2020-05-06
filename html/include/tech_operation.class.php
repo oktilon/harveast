@@ -188,14 +188,24 @@ class TechOperation {
         return self::$cache[$id];
     }
 
-    public static function getFieldworks($id_only = false, $implode = false, $inverse = false) {
+    public static function getFieldworks($id_only = true, $implode = true, $inverse = false) {
+        return self::searchFieldworks('', $id_only, $implode, $inverse);
+    }
+
+    public static function searchFieldworks($txt, $id_only = true, $implode = true, $inverse = false) {
         $flt = [['flags & :f', 'f', self::FLAG_TO_VALID]];
         if($inverse) {
             $flt[0][0] .= ' = 0';
         }
+        if($txt) {
+            $a_txt = explode(' ', $txt);
+            foreach($a_txt as $ix => $txp) {
+                $flt[] = ["name LIKE :n{$ix}", "n{$ix}", "%{$txp}%"];
+            }
+        }
         $ord = $id_only ? 'id' : 'name';
         if($id_only) $flt[] = 'id_only';
-        $r = TechOperation::getList($flt, $ord);
+        $r = self::getList($flt, $ord);
         if($id_only && $implode) $r = implode(',', $r);
         return $r;
     }
@@ -238,7 +248,7 @@ class TechOperation {
         self::$total = 0;
         $empty = true;
         $obj = true;
-        $all = false;
+        $all = true; // Until valid TO
         $ret = [];
         $par = [];
         $add = [];

@@ -20,6 +20,7 @@ class FixedAsset {
     /** @var EquipmentModel */
     public $model_equip = null;
     public $upd = null;
+    public $ix = 0;
 
     const FLAG_FA_DELETED      = 0x0001;
     const FLAG_FA_ACTIVE       = 0x0002;
@@ -62,6 +63,7 @@ class FixedAsset {
     private static function getProperty($key, $val) {
         switch($key) {
             case 'id':
+            case 'ix':
             case 'flags':
             case 'parent':
             case 'capacity': return intval($val);
@@ -180,13 +182,6 @@ class FixedAsset {
         return $t->save($this);
     }
 
-    public static function get($id) {
-        if(!isset(self::$cache[$id])) {
-            self::$cache[$id] = new FixedAsset($id);
-        }
-        return self::$cache[$id];
-    }
-
     public function getSimple() { return $this->getJson(); }
 
     public function getJson($simple = true) {
@@ -199,6 +194,32 @@ class FixedAsset {
         }
         return $ret;
     }
+
+    public static function get($id) {
+        if(!isset(self::$cache[$id])) {
+            self::$cache[$id] = new FixedAsset($id);
+        }
+        return self::$cache[$id];
+    }
+
+    public static function searchEquipment($txt, $id_only = true, $implode = false) {
+        $flt = [
+            ['flags & :f = 0', 'f', self::FLAG_FA_FOLDER],
+            'model_equip > 0'
+        ];
+        if($txt) {
+            $a_txt = explode(' ', $txt);
+            foreach($a_txt as $ix => $txp) {
+                $flt[] = ["name LIKE :n{$ix}", "n{$ix}", "%{$txp}%"];
+            }
+        }
+        $ord = $id_only ? 'id' : 'name';
+        if($id_only) $flt[] = 'id_only';
+        $r = self::getList($flt, $ord);
+        if($id_only && $implode) $r = implode(',', $r);
+        return $r;
+    }
+
 
     public static function findByText($txt, $limit = 0, $implode = false) {
         $flt = [

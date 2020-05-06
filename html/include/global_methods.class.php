@@ -94,6 +94,7 @@ class GlobalMethods {
 
     public static function altLoad($m, $q) {
         global $DB, $PG;
+        if(!defined('ALT_MODULES')) return $q;
         $filePath = ALT_MODULES . 'mdl' . DIRECTORY_SEPARATOR . $m . '.php';
         if(file_exists($filePath)) {
             $wxObjTMP = isset($_REQUEST['obj']) ? json_decode($_REQUEST['obj']) : false; $p = $wxObjTMP && property_exists($wxObjTMP, 'p') ? $wxObjTMP->p : false;
@@ -101,5 +102,31 @@ class GlobalMethods {
             return [];
         }
         return $q;
+    }
+
+    public static function altLoadJs($m, $dt) {
+        global $DB, $PG;
+        if(!defined('ALT_MODULES')) return;
+        $filePath = ALT_MODULES . 'mdl' . DIRECTORY_SEPARATOR . $m . '.js';
+        $stylePath = ALT_MODULES . 'mdl' . DIRECTORY_SEPARATOR . $m . '.css';
+        $ret = [
+            'status' => 'error',
+            'data' => '',
+            'dt' => 0,
+        ];
+        $dts = file_exists($stylePath) ? filemtime($stylePath) : 0;
+        if(file_exists($filePath)) {
+            $ret['status'] = 'ok';
+            $dtf = filemtime($filePath);
+            if($dtf > $dt || $dts > $dt) {
+                $js = file_get_contents($filePath);
+                $css = $dts ? file_get_contents($stylePath) : '';
+                if($css) $js .= "\nwebix.html.addStyle(`{$css}`);\n";
+                $ret['data'] = base64_encode($js);
+                $ret['dt'] = max($dtf, $dts);
+            }
+            echo json_encode($ret);
+            die();
+        }
     }
 }

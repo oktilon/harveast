@@ -83,12 +83,19 @@ class WebixList {
         $example = self::getClassExample($class);
         $prefix = '';
         foreach($arr as $o) {
+            $append = [];
             $prop = property_exists($o, 'by') ? $o->by : (property_exists($o, 'id') ? $o->id : '');
+            $dir = property_exists($o, 'dir') ? $o->dir : 'ASC';
             if($alias && array_key_exists($prop, $alias)) {
                 $pp = $alias[$prop];
                 if(is_array($pp)) {
                     $prefix = array_shift($pp);
-                    $pp = array_shift($pp);
+                    $px = array_shift($pp);
+                    while($pp) {
+                        $ex = array_shift($pp);
+                        $append[] = $prefix . $ex . ' ' . $dir;
+                    }
+                    $pp = $px;
                 }
                 $prop = $pp;
             }
@@ -104,7 +111,10 @@ class WebixList {
                         $by = '';
                     }
                 }
-                if($by) $ret[] = $prefix . $by . ' ' . $o->dir;
+                if($by) {
+                    $ret[] = $prefix . $by . ' ' . $dir;
+                    if($append) $ret = array_merge($ret, $append);
+                }
             }
         }
         if(empty($ret)) $ret[] = $def;
