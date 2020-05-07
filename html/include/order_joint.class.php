@@ -14,7 +14,7 @@ class OrderJoint {
     public $area     = 0.0;
     public $tot      = 0.0;
 
-    public $cluster  = null;
+    public $cluster  = 0;
 
     public $close_dt = null;
     public $close_user = null;
@@ -60,14 +60,14 @@ class OrderJoint {
         global $DB;
         $this->d_beg = new DateTime();
         $this->d_end = new DateTime();
-        $this->cluster = Cluster::get(0);
+        // $this->cluster = Cluster::get(0);
         $this->close_dt = new DateTime('2000-01-01');
-        $this->close_user = CUser::get(0);
+        $this->close_user = User::get(0);
 
         if(is_object($arg) && is_a($arg, 'OrderJoint')) {
             $this->geo = $arg->geo;
             $this->techop = $arg->techop;
-            $this->cluster = $arg->cluster;
+            // $this->cluster = $arg->cluster;
             $this->flags = $arg->flags & 0x05;
             if(is_object($items) && is_a($items, 'OrderJointItem')) {
                 $this->d_beg = $items->cloneBeg();
@@ -110,8 +110,8 @@ class OrderJoint {
             case 'area':
             case 'tot': return floatval($val);
             case 'logs': return $val;
-            case 'cluster': return Cluster::get($val);
-            case 'close_user': return CUser::get($val);
+            // case 'cluster': return Cluster::get($val);
+            case 'close_user': return User::get($val);
         }
         return intval($val);
     }
@@ -238,16 +238,16 @@ class OrderJoint {
     }
 
     public function getCluster() {
-        global $DB;
-        $logs = implode(',', $this->getLogList());
-        $q = $DB->prepare("SELECT f.`cluster`, COUNT(*) AS cnt
-                            FROM gps_order_log ol
-                            LEFT JOIN spr_firms f ON f.id = ol.`firm`
-                            WHERE ol.id IN($logs)
-                            GROUP BY f.`cluster`
-                            ORDER BY cnt DESC")
-                ->execute_row();
-        if($q) $this->cluster = Cluster::get($q['cluster']);
+        return 0;
+        // $logs = implode(',', $this->getLogList());
+        // $q = $DB->prepare("SELECT f.`cluster`, COUNT(*) AS cnt
+        //                     FROM gps_order_log ol
+        //                     LEFT JOIN spr_firms f ON f.id = ol.`firm`
+        //                     WHERE ol.id IN($logs)
+        //                     GROUP BY f.`cluster`
+        //                     ORDER BY cnt DESC")
+        //         ->execute_row();
+        // if($q) $this->cluster = Cluster::get($q['cluster']);
     }
 
     public function removeIslands($min_size = 0, $isUserTable = false) {
@@ -669,7 +669,7 @@ class OrderJoint {
         $oj->getCluster();
         $oj->setRecalc(true);
         $oj->save();
-        echo " new (cl:{$oj->cluster->id})";
+        echo " new (oj:{$oj->id})";
         if($DB->error) $oj->id = -1;
         return $oj;
     }
@@ -814,7 +814,7 @@ class OrderJoint {
         }
         foreach($this as $key => $val) {
             if(is_a($val, 'DateTime')) $val = $val->format('Y-m-d H:i:s');
-            if($key == 'cluster') $val = $val->getSimple();
+            // if($key == 'cluster') $val = $val->getSimple();
             if($key == 'list') {
                 $val = [];
                 //if($this->lines) foreach($this->lines as $line) $val[] = $line->getSimple();
@@ -889,15 +889,15 @@ class OrderJoint {
     /**
      * Get all users who closed joints
      *
-     * @param int $mode = 0-CUser, 1-getSimple, 2-getJson
-     * @return CUser[]
+     * @param int $mode = 0-User, 1-getSimple, 2-getJson
+     * @return User[]
      */
     public static function getUsersList($mode = 1) {
         $ret = [];
         $uids = self::getList(['users']);
         foreach($uids as $uid) {
             if($uid > 0) {
-                $u = CUser::get($uid);
+                $u = User::get($uid);
                 switch($mode) {
                     case 1: $ret[] = $u->getSimple(); break;
                     case 2: $ret[] = $u->getJson(); break;
