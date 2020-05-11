@@ -206,6 +206,7 @@ class OrderLog {
     public function isFutureYear() { return $this->getFlag(self::FLAG_IS_FUTURE_YEAR); }
     public function setChange($on = true) { $this->setFlag(self::FLAG_IS_CHANGE, $on); }
     public function setRemoved($on = true) { $this->setFlag(self::FLAG_IS_REMOVED, $on); }
+    public function setWorking($on = true) { $this->setFlag(self::FLAG_IS_WORKING, $on); }
 
     public function canEvalArea() {
         return $this->geo > 0 && $this->isWorking() && $this->top_wd > 0;

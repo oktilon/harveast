@@ -82,7 +82,7 @@ try {
             } else {
                 if($oj->needRecalc()) {
                     echo " joint:{$oj->id} ";
-                    $oj->evalJointArea(0, $fast_mode);
+                    $oj->evalJointArea(0);
                     $oj->setRecalc(false);
                     $oj->save();
                 }
@@ -92,7 +92,7 @@ try {
             //die();
         }
 
-        OrderJoint::markOrdersFromList($fast_mode);
+        OrderJoint::markOrdersFromList();
 
         $step--;
     }
@@ -101,7 +101,9 @@ try {
     Info('Exception : ' . $e->getMessage());
     print_r($e->getTrace());
 }
-$esc->finish();
-PageManager::pidUnLock();
+
+if(!$geo_only) {
+    GlobalMethods::pidUnLock();
+}
 $dt = time() - $init;
 Info("Ended within $dt sec., Rows: $tot");

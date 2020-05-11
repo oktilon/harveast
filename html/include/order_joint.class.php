@@ -28,6 +28,7 @@ class OrderJoint {
     public static $total  = 0;
     public static $log    = '';
     public static $dbg_on = false;
+    public static $json_full = false;
     public static $error = '';
 
     const FLAG_NEED_RECALC    = 0x01;
@@ -260,7 +261,7 @@ class OrderJoint {
         $q = $PG->prepare("SELECT ST_NumGeometries(poly) FROM $tbl WHERE id = :i")
             ->bind('i', $this->id)
             ->execute_scalar();
-        PageManager::debug($q, 'ST_NumGeometries');
+        GlobalMethods::debug($q, 'ST_NumGeometries');
         if($q > 1) {
             $PG->prepare("UPDATE $tbl
                     SET poly = (SELECT ST_Collect(gg) FROM (
@@ -270,7 +271,7 @@ class OrderJoint {
                 ->bind('i', $this->id)
                 ->bind('s', $min_size)
                 ->execute();
-            PageManager::debug($PG->error, 'DumpMpErr');
+            GlobalMethods::debug($PG->error, 'DumpMpErr');
         } else {
             $PG->prepare("UPDATE $tbl
                     SET poly = filter_rings(poly, :s)
@@ -278,7 +279,7 @@ class OrderJoint {
                 ->bind('i', $this->id)
                 ->bind('s', $min_size)
                 ->execute();
-            PageManager::debug($PG->error, 'DumpErr');
+            GlobalMethods::debug($PG->error, 'DumpErr');
         }
     }
 
@@ -359,7 +360,7 @@ class OrderJoint {
             $q = $PG->prepare("INSERT INTO order_joint (id, poly)
                                 SELECT :i, ST_Union(poly::geometry)
                                 FROM order_area
-                                WHERE _id IN($lst)
+                                WHERE id IN($lst)
                             ON CONFLICT (id)
                             DO UPDATE SET poly = excluded.poly;")
                     ->bind('i', $this->id)
@@ -481,7 +482,7 @@ class OrderJoint {
                 $q = $PG->prepare("INSERT INTO user_joint (id, poly)
                                     SELECT :i, ST_Union(poly::geometry)
                                     FROM order_area
-                                    WHERE _id IN($lst)
+                                    WHERE id IN($lst)
                                 ON CONFLICT (id)
                                 DO UPDATE SET poly = excluded.poly;")
                         ->bind('i', $this->id)
@@ -813,13 +814,25 @@ class OrderJoint {
             $ret->crop = $crop_by->getSimple();
         }
         foreach($this as $key => $val) {
-            if(is_a($val, 'DateTime')) $val = $val->format('Y-m-d H:i:s');
+            $v = $val;
+            if(is_a($val, 'DateTime')) $v = $val->format('Y-m-d H:i:s');
+            elseif(is_a($val, 'User')) $v = $val->getJson();
             // if($key == 'cluster') $val = $val->getSimple();
             if($key == 'list') {
-                $val = [];
+                $v = [];
                 //if($this->lines) foreach($this->lines as $line) $val[] = $line->getSimple();
             }
-            $ret->$key = $val;
+            $ret->$key = $v;
+        }
+        if(self::$json_full) {
+            $top = TechOperation::get($this->techop);
+            // $top->cond = $this->top_cond;
+
+            $geo = GeoFence::get($this->geo, true, true);
+
+            $ret->geo = $geo->getSimple();
+            $ret->techop = $top->getJson();
+            //
         }
         return $ret;
     }
@@ -841,15 +854,14 @@ class OrderJoint {
         }
     }
 
-    public static function markOrdersFromList($fast) {
+    public static function markOrdersFromList() {
         global $DB;
         if(count(self::$ordersList) > 0) {
             $oids = implode(',', self::$ordersList);
-            $flag = $fast ? WorkOrder::FLAG_ORDER_JOINT_FAST : WorkOrder::FLAG_ORDER_JOINT;
             $DB->prepare("UPDATE gps_orders
                         SET flags = flags | :f
                         WHERE id IN ($oids)")
-                ->bind('f', $flag)
+                ->bind('f', WorkOrder::FLAG_ORDER_JOINT)
                 ->execute();
 
             // Log
@@ -863,27 +875,6 @@ class OrderJoint {
             }
 
         }
-    }
-
-    public static function getWebixArray($flt = [], $ord = 'd_beg DESC', $lim = '') {
-        $ret = [ ];
-        $lst = self::getList($flt, $ord, $lim);
-        foreach($lst as $it) {
-            $it->readItems();
-            $obj = $it->getJson();
-
-            // $obj->top_cond = TechOperationCondition::get($it->top_cond);
-            $top = TechOperation::get($it->techop);
-            // $top->cond = $obj->top_cond;
-
-            $geo = GeoFence::get($it->geo, true, true);
-
-            $obj->geo = $geo->getSimple();
-            $obj->techop = $top->getSimple();
-
-            $ret[] = $obj;
-        }
-        return $ret;
     }
 
     /**
@@ -932,7 +923,7 @@ class OrderJoint {
         foreach($ids as $id) {
             if($id > 0) {
                 $t = new TechOperation($id);
-                $ret[] = $t->getSimple();
+                $ret[] = $t->getJson();
             }
         }
         return $ret;
@@ -1022,8 +1013,9 @@ class OrderJoint {
     public static function getList($flt = array(), $ord = '', $lim = '') {
         global $DB;
         self::$total = 0;
+        self::$json_full = false;
         $lst = false;
-        $obj = true;
+        $json = false;
         $ret = [];
         $par = [];
         $add = [];
@@ -1032,42 +1024,36 @@ class OrderJoint {
         foreach($flt as $it) {
             if($it == 'id_only') {
                 $flds = $fld = 'id';
-                $obj  = false;
-            } elseif($it == 'list') {
+            } elseif($it == 'json_full') {
+                self::$json_full = true;
+                $json = true;
+            } elseif($it == 'list') { // with items
                 $lst = true;
             } elseif($it == 'users') {
                 $flds = 'DISTINCT close_user';
                 $lim = '';
                 $ord = 'close_user';
                 $fld = 'close_user';
-                $obj = false;
                 $add[] = 'close_user > 0';
             } elseif($it == 'fields') {
                 $flds = 'DISTINCT geo';
                 $lim = '';
                 $ord = 'geo';
                 $fld = 'geo';
-                $obj = false;
                 $add[] = 'geo > 0';
             } elseif($it == 'techops') {
                 $flds = 'DISTINCT techop';
                 $lim = '';
                 $ord = 'techop';
                 $fld = 'techop';
-                $obj = false;
                 $add[] = 'techop > 0';
             } elseif(is_array($it)) {
                 $cond = array_shift($it);
-                switch($cond) {
-                    case 'fields':
-                        $flds = implode(',', $it);
-                        $obj = false;
-                        break;
-
-                    default:
-                        if($cond) $add[] = $cond;
-                        $par[$it[0]] = $it[1];
-                        break;
+                if($cond == 'fields') {
+                    $flds = implode(',', $it);
+                } else {
+                    if($cond) $add[] = $cond;
+                    $par[$it[0]] = $it[1];
                 }
             } else {
                 $add[] = $it;
@@ -1088,7 +1074,8 @@ class OrderJoint {
             self::$total = intval($DB->select_scalar("SELECT FOUND_ROWS()"));
         }
         foreach($rows as $row) {
-            $ret[] = $obj ? new OrderJoint($row, $lst) : ($fld ? intval($row[$fld]) : $row);
+            $it = $flds == '*' ? new OrderJoint($row, $lst) : ($fld ? intval($row[$fld]) : $row);
+            $ret[] = $json && $flds == '*' ? $it->getJson() : $it;
         }
         return $ret;
     }

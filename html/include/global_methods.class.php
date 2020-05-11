@@ -1,8 +1,9 @@
 <?php
 class GlobalMethods {
     public static $dbg = [];
-    public $debug = '';
     public static $pidFile = '';
+    /** @var User */
+    public static $user = null;
 
     const EMPTY_ID = MAX_ID;
 
@@ -21,6 +22,31 @@ class GlobalMethods {
 
     public static function getMTime() {
         return intval(microtime(true) * 1000);
+    }
+
+    public static function getUser() {
+        if(self::$user === null)  {
+            self::$user = User::getCurrentUser();
+        }
+        return self::$user;
+    }
+
+    public static function assertRead() {
+        $u = self::getUser();
+        //$u->hasRights()
+        return $u->id > 0;
+    }
+
+    public static function assertEdit() {
+        $u = self::getUser();
+        //$u->hasRights()
+        return $u->id > 0;
+    }
+
+    public static function assertDelete() {
+        $u = self::getUser();
+        //$u->hasRights()
+        return $u->id > 0;
     }
 
     public static function pidLock($lckFile = 'alert.loc', $skip = 3600, $admin_tg = 0, $greps = [], $next = 3600) {

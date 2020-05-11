@@ -32,6 +32,7 @@ class User {
     private static $cache = [];
     public static $total = 0;
     public static $error = '';
+    public static $full_json = false;
 
     public static $skipFields= [
         'upd',
@@ -220,7 +221,7 @@ class User {
     }
 
     public function save() {
-        $t = new SqlTable('spr_users', $this, $skip);
+        $t = new SqlTable('spr_users', $this, self::$skipFields);
         return $t->save($this);
     }
 
@@ -285,11 +286,17 @@ class User {
 
     public function getJson() {
         $ret = new stdClass();
+        $only = ['id', 'phone'];
         foreach($this as $k => $v) {
+            if(!self::$full_json && !in_array($k, $only)) continue;
             if(is_array($v)) $v = implode(',', $v);
             if(is_a($v, 'DateTime')) $v = intval($v->format('U'));
             if($k=='password') $v = ($v != 'password');
             $ret->$k = $v;
+        }
+        if(!self::$full_json) {
+            $ret->name = $this->fio();
+            $ret->chat = $this->telegram_id;
         }
         return $ret;
     }
@@ -358,6 +365,7 @@ class User {
     }
 
     public function setSession() {
+        self::$full_json = true;
         $_SESSION['user'] = $this->getJson();
     }
 
@@ -452,9 +460,8 @@ class User {
     public static function getList($flt = [], $ord = 'id', $lim = '') {
         global $DB;
         self::$total = 0;
+        self::$full_json = false;
         $leaveAllFirms = false;
-        $obj = true;
-        $int = false;
         $ret = [];
         $par = [];
         $add = [];
@@ -463,22 +470,17 @@ class User {
         foreach($flt as $it) {
             if($it == 'id_only') {
                 $flds = $fld = 'id';
-                $obj  = false;
-                $int  = true;
+            } elseif($it == 'full_json') {
+                self::$full_json = true;
             } elseif($it == 'leaveAllFirms') {
                 $leaveAllFirms = true;
             } elseif(is_array($it)) {
                 $cond = array_shift($it);
-                switch($cond) {
-                    case 'fields':
-                        $flds = implode(',', $it);
-                        $obj = false;
-                        break;
-
-                    default:
-                        if($cond) $add[] = $cond;
-                        $par[$it[0]] = $it[1];
-                        break;
+                if($cond == 'fields') {
+                    $flds = implode(',', $it);
+                } else {
+                    if($cond) $add[] = $cond;
+                    $par[$it[0]] = $it[1];
                 }
             } else {
                 $add[] = $it;
@@ -498,7 +500,7 @@ class User {
             self::$total = intval($DB->select_scalar("SELECT FOUND_ROWS()"));
         }
         foreach($rows as $row) {
-            $ret[] = $obj ? new User($row, $leaveAllFirms) : ($int ? intval($row[$fld]) : $row);
+            $ret[] = $flds == '*' ? new User($row, $leaveAllFirms) : ($fld ? intval($row[$fld]) : $row);
         }
         return $ret;
     }
