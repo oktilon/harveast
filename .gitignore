@@ -1,3 +1,4 @@
 .vscode
 base/config.php
+vendor/*
 *.lck
