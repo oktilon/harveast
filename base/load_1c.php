@@ -41,9 +41,9 @@ foreach(i1C::$item_list as $it_key => $cls) {
 
     while($q) {
         $q = $DB->prepare("SELECT id, obj, dt FROM st_buffer_1c
-                            WHERE parse = 0 AND id > :lid
+                            WHERE parse = 0 AND name = :n
                             LIMIT 1")
-                    ->bind('lid', $last_id)
+                    ->bind('n', $it_key)
                     ->bindColumn(1, $last_id, PDO::PARAM_INT)
                     ->bindColumn(2, $lob, PDO::PARAM_LOB)
                     ->bindColumn(3, $dto, PDO::PARAM_STR)
