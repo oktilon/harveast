@@ -212,7 +212,7 @@ class GlobalMethods {
 
 
     public static function initText() {
-        self::$headers = getallheaders();
+        self::$headers = function_exists('getallheaders') ? getallheaders() : [];
 
         if(isset(self::$headers['Accept-Language'])) {
             self::evalLanguage(self::$headers['Accept-Language']);
