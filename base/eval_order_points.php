@@ -43,7 +43,6 @@ if($part_div > 0) {
 }
 
 InfoPrefix(__FILE__, $add);
-Info(sprintf('Started (%u)', getmypid()));
 
 $info_msg = '';
 /** @var WorkOrder */
@@ -56,8 +55,6 @@ try {
 
     $f = WorkOrder::FLAG_ORDER_RECALC;
 
-    $now = date('Y-m-d H:i:s', time() + 1800);
-
     $flt = [
         "flags & $f"
     ];
@@ -66,10 +63,8 @@ try {
         $flt[] = "gps_id % {$part_del} = {$eq}";
     }
     if($ord_only) $flt[] = 'id IN(' . implode(',', $ord_only) . ')';
-    //echo json_encode($flt, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL;
-    $orders = WorkOrder::getList($flt, 'd_beg, car');
-    //echo "DB ERR : {$DB->error}\n";
 
+    $orders = WorkOrder::getList($flt, 'd_beg, car');
 
     if (!$orders) {
         Info('No orders to recalc');
@@ -97,8 +92,6 @@ try {
         throw new Exception("No gps (Device: {$ord->car->device->id})", 1);
     }
 
-    $workIn   = [];
-
     $tBeg = intval($ord->d_beg->format('U'));
     $tEnd = intval($ord->d_end->format('U'));
 
@@ -117,7 +110,8 @@ try {
     echo "msgs: $cnt\n";
 
     foreach($messages as $msg) {
-        CarLogPoint::calcPoint($msg, $iid);
+        $ok = CarLogPoint::calcPoint($msg, $iid);
+        if($ok) echo CarLogPoint::$last_gid ? 'o' : '.';
     }
     $ord->updateCheckPoints(true);
     $info_msg = "Recalculated: $cnt messages.";
