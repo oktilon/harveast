@@ -56,7 +56,7 @@ try {
     $now = date('Y-m-d H:i:s', time() + 1800);
 
     $flt = [
-        ['(o.flags & :log) = 0', 'log', WorkOrder::FLAG_ORDER_LOG],
+        ['(o.flags & :log) = 0', 'log', WorkOrder::FLAG_ORDER_LOG || WorkOrder::FLAG_ORDER_RECALC],
         'o.gps_id > 0',
         'o.d_beg <= DATE_ADD(NOW(), INTERVAL 30 MINUTE)',
         '(d.tm > UNIX_TIMESTAMP(o.d_end) OR DATE_ADD(o.d_end, INTERVAL 1 HOUR) < NOW())',
