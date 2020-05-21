@@ -120,6 +120,7 @@ try {
     $info_msg = $pref . $e->getMessage();
 }
 
+GlobalMethods::pidUnLock();
 $dt = time() - $init;
 $flg = $ord ? sprintf("[0x%X]", $ord->flags) : '';
 Info("Ended within $dt sec., Ord: $oid, Car: $cid, Gpd: $iid, $info_msg $flg");
