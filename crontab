@@ -16,6 +16,9 @@ MAILTO = ""
 12,27,42,57	*	*	*	*	php /var/www/html/public/base/eval_chessboard.php -p 7
 14,29,44,59	*	*	*	*	php /var/www/html/public/base/eval_chessboard.php -p 8
 
+# every minute run recalculation for one order to recalc
+*	*	*	*	*	php /var/www/html/public/base/eval_order_points.php
+
 # Demo mode (every minute all vehicles)
 #*	*	*	*	*	php /var/www/html/public/base/check_work_speed.php
 
