@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: harveast\n"
-"POT-Creation-Date: 2020-05-18 17:41+0300\n"
-"PO-Revision-Date: 2020-05-18 17:45+0300\n"
+"POT-Creation-Date: 2020-05-22 09:26+0300\n"
+"PO-Revision-Date: 2020-05-22 09:27+0300\n"
 "Last-Translator: Denis Stovbun <oktilon@gmail.com>\n"
 "Language-Team: \n"
 "Language: ru_RU\n"
@@ -46,7 +46,7 @@ msgstr "Прицепное"
 
 #: base/locale.php:9
 msgid "Note"
-msgstr "Примеч."
+msgstr "Примечание"
 
 #: base/locale.php:10
 msgid "Begin"
@@ -123,3 +123,51 @@ msgstr "Найм"
 #: base/locale.php:28
 msgid "Wrong order"
 msgstr "Неверный наряд"
+
+#: base/locale.php:29
+msgid "Points finished"
+msgstr "Точки посчитаны"
+
+#: base/locale.php:30
+msgid "Parsed"
+msgstr "Трек обработан"
+
+#: base/locale.php:31
+msgid "Joint area"
+msgstr "Совместная площадь"
+
+#: base/locale.php:32
+msgid "Recalculation"
+msgstr "Перерасчет"
+
+#: base/locale.php:33
+msgid "Double track"
+msgstr "Двойной след"
+
+#: base/locale.php:34
+msgid "Next year"
+msgstr "След. год"
+
+#: base/locale.php:35
+msgid "Invalid geometry"
+msgstr "Плохая геометрия"
+
+#: base/locale.php:36
+msgid "No Gps"
+msgstr "Нет трекера"
+
+#: base/locale.php:37
+msgid "No valid operation"
+msgstr "Нет валидной ТО"
+
+#: base/locale.php:38
+msgid "Operation width is unknown"
+msgstr "Неизвестная ширина операции"
+
+#: base/locale.php:39
+msgid "No messages"
+msgstr "Нет точек"
+
+#: base/locale.php:40
+msgid "Deleted"
+msgstr "Удален"
