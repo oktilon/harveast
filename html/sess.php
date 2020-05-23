@@ -26,7 +26,7 @@
         die();
     }
 
-    GlobalMethods::initText();
+    GlobalMethods::initText(dirname(dirname(__FILE__)) . $DS . 'base' . $DS . 'locale.php');
 
     $infoPrefix = '';
 

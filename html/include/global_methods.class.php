@@ -6,6 +6,7 @@ class GlobalMethods {
     public static $user = null;
     public static $headers = [];
 
+    public static $loc     = [];
     public static $lang    = 'ru';
     public static $locale  = 'ru_RU';
     public static $locales = [
@@ -211,7 +212,7 @@ class GlobalMethods {
     }
 
 
-    public static function initText() {
+    public static function initText($locale_file = '') {
         self::$headers = function_exists('getallheaders') ? getallheaders() : [];
 
         if(isset(self::$headers['Accept-Language'])) {
@@ -223,5 +224,10 @@ class GlobalMethods {
         setlocale(LC_ALL, $locale);
         bindtextdomain("harveast", PATH_TEXT);
         textdomain("harveast");
+
+        if($locale_file && is_file($locale_file)) {
+            require_once $locale_file;
+            self::$loc = $locale;
+        }
     }
 }
