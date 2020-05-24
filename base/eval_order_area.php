@@ -101,21 +101,21 @@ try {
 
     foreach($orders as $iRow => $ord) { // По каждому наряду
         $ord_line = null;
-        if(!$ord->tech_op->isFieldOperation()) {
+        if(!$ord->tech_op->isValidOperation()) {
             $ord->finalAreaNoFldWork();
-            Info(sprintf("Ord: %d without fieldworks [0x%X]", $ord->id, $ord->flags));
+            Info(sprintf("Ord: %d without valid techop [0x%X]", $ord->id, $ord->flags));
             continue;
         }
 
-        $wd = 0;
-        if($ord->car->id == 257) $wd = 16800;
+        $wd = $ord->equip->model_equip->wd;
+        if($wd < 1) $wd = 6000;
 
         if($wd == 0) {
             $ord->finalAreaNoWidth();
             Info(sprintf(
                 "Ord: %d without width (TOC:%d) [0x%X]"
                 , $ord->id
-                , $ord_line->tech_cond->id
+                , 0
                 , $ord->flags
             ));
             continue;
@@ -147,7 +147,7 @@ try {
             if($log->canEvalArea()) {
                 echo "eval area for log {$log->id}\n";
                 $stm += $log->tm_stay;
-                $a = $log->evalArea($dbl_track, );
+                $a = $log->evalArea($dbl_track);
                 $err = OrderLog::$error;
                 $area += $a;
                 Info("{$ord->id} work in {$log->geo} [L:$log->id] = $a $err");

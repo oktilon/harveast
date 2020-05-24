@@ -1,35 +1,39 @@
 <?php
 $init = time();
-require_once dirname(dirname(dirname(__FILE__))) . '/cron.php';
+require_once dirname(__DIR__) . '/html/sess.php';
+$_REQUEST['obj'] = '{"p":1}';
 
-$fast_mode = false;
+$args = [];
+if($argc > 1) {
+    $args = array_slice($argv, 1);
+}
+
 $step    = 1;
 $dt_now  = new DateTime();
 $dt_many = null;
 $dt_eval = '';
-$geo_only = false;
-$arg     = '';
+$geo_only = [];
 $add     = '';
 $tot     = 0;
-while($PM->args) {
-    $cmd = array_shift($PM->args);
-    if(preg_match('/^\-(\w)$/', $cmd, $m)) {
-        $arg = $m[1];
+$cmd = '';
+while($args) {
+    $arg = array_shift($args);
+    if(preg_match('/^\-(\w+)$/', $arg, $m)) {
+        $cmd = $m[1];
     } else {
-        if($arg == 'd' && preg_match('/^(\d{4})-(\d\d)-(\d\d)$/', $cmd)) $dt_eval = $cmd;
-        if($arg == 's' && preg_match('/^(\d{4})-(\d\d)-(\d\d)$/', $cmd)) $dt_many = new DateTime($cmd);
-        if($arg == 'g' && preg_match('/^\d+$/', $cmd)) $geo_only = intval($cmd);
-        $arg = '';
+        if($cmd == 'd' && preg_match('/^(\d{4})-(\d\d)-(\d\d)$/', $arg)) {
+            $dt_eval = $arg;
+            $cmd = '';
+        }
+        if($cmd == 's' && preg_match('/^(\d{4})-(\d\d)-(\d\d)$/', $arg)) {
+            $dt_many = new DateTime($arg);
+            $cmd = '';
+        }
+        if($cmd == 'g' && preg_match('/^\d+$/', $arg)) {
+            $geo_only[] = intval($arg);
+            $add = '_g';
+        }
     }
-    if($arg == 'f') {
-        $fast_mode = true;
-        $arg = '';
-    }
-}
-
-$add = '';
-if($fast_mode) {
-    $add = "_f";
 }
 
 InfoPrefix(__FILE__, $add);
@@ -38,10 +42,9 @@ Info(sprintf('Started (%u)', getmypid()));
 try {
     $lckFile  = str_replace('.php', "{$add}.lck", $_SERVER['SCRIPT_FILENAME']);
 
-    if(!PageManager::pidLock($lckFile, 10000, ADMIN_CHAT)) die();
-
-    $sBp = substr(basename($_SERVER['PHP_SELF']), 0, -4);
-    $esc = Escalation::get($sBp);
+    if(!$geo_only) {
+        if(!GlobalMethods::pidLock($lckFile, 10000, ADMIN_CHAT)) die();
+    }
 
     while($step > 0) {
         if($dt_many != null) {
@@ -56,7 +59,7 @@ try {
         }
         if($dt_eval) $add = " till $dt_eval";
 
-        $rows = OrderJoint::findJoints($dt_eval, $fast_mode, $geo_only);
+        $rows = OrderJoint::findJoints($dt_eval, $geo_only);
         $cnt = count($rows);
         $tot += $cnt;
         Info("Check $cnt rows" . $add);
@@ -79,7 +82,7 @@ try {
             } else {
                 if($oj->needRecalc()) {
                     echo " joint:{$oj->id} ";
-                    $oj->evalJointArea(0, $fast_mode);
+                    $oj->evalJointArea(0);
                     $oj->setRecalc(false);
                     $oj->save();
                 }
@@ -89,7 +92,7 @@ try {
             //die();
         }
 
-        OrderJoint::markOrdersFromList($fast_mode);
+        OrderJoint::markOrdersFromList();
 
         $step--;
     }
@@ -98,7 +101,9 @@ try {
     Info('Exception : ' . $e->getMessage());
     print_r($e->getTrace());
 }
-$esc->finish();
-PageManager::pidUnLock();
+
+if(!$geo_only) {
+    GlobalMethods::pidUnLock();
+}
 $dt = time() - $init;
 Info("Ended within $dt sec., Rows: $tot");

@@ -56,10 +56,10 @@ try {
     $now = date('Y-m-d H:i:s', time() + 1800);
 
     $flt = [
-        ['(o.flags & :log) = 0', 'log', WorkOrder::FLAG_ORDER_LOG],
+        ['(o.flags & :log) = 0', 'log', WorkOrder::FLAG_ORDER_LOG | WorkOrder::FLAG_ORDER_RECALC],
         'o.gps_id > 0',
-        ['o.d_beg <= :d', 'd', $now],
-        'd.tm > UNIX_TIMESTAMP(o.d_end)',
+        'o.d_beg <= DATE_ADD(NOW(), INTERVAL 30 MINUTE)',
+        '(d.tm > UNIX_TIMESTAMP(o.d_end) OR DATE_ADD(o.d_end, INTERVAL 1 HOUR) < NOW())',
         ['join_devices', 'd.tm']
     ];
     if($part_div > 0) {
@@ -93,9 +93,7 @@ try {
         $cid = $ord->car->id;
         $fid = $ord->firm->id;
         $tid = $ord->car->ts_type->id;
-        $ord_line = null;
-        $agl = new AggregationList();
-        if($cid == 257) $agl->hd_width = 16800;
+        $em = $ord->equip->model_equip;
 
         $msg_oid = sprintf("%d (%d of %d)", $oid, $iRow+1, $ord_cnt);
 
@@ -103,7 +101,7 @@ try {
         if($info) Info($info);
         $info = '';
 
-        if(!$ord->tech_op->isFieldOperation()) {
+        if(!$ord->tech_op->isValidOperation()) {
             $ord->finalNoFldWork();
             Info(sprintf("Ord: $msg_oid without fieldworks [0x%X]", $ord->flags));
             $itBeg = 0;
@@ -149,7 +147,7 @@ try {
             //     $plog ? $plog->id : 0,
             //     $plog ? $plog->geo : 0);
             if($log == null) {
-                $log = new OrderLog($ord, $ord_line, $pnt, $agl);
+                $log = new OrderLog($ord, $pnt, $em);
                 $log->save(false);
                 $logs[] = $log;
                 echo "[g:{$log->geo}]";

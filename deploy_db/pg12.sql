@@ -55,3 +55,9 @@ CREATE TABLE harveast.order_log_line (
 PARTITION BY RANGE(dtb);
 CREATE INDEX "IX_dte" ON harveast.order_log_line USING btree (dte);
 CREATE INDEX "IX_log" ON harveast.order_log_line USING btree (log_id);
+
+CREATE TABLE order_joint (
+	id int4 NOT NULL DEFAULT 0,
+	poly geometry NOT NULL,
+	CONSTRAINT PK_order_joint PRIMARY KEY (id)
+);

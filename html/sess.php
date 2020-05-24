@@ -7,6 +7,8 @@
 	define('PATH_CLAS',			PATH_ROOT . '/classes');
 
     require_once PATH_INC . '/autoload.php';
+    require_once dirname(dirname(__FILE__)) . $DS . 'vendor' . $DS . 'autoload.php';
+
     $DB = new connect_db();
     $PG = connect_db::PostgreSql();
 
@@ -23,6 +25,8 @@
         }
         die();
     }
+
+    GlobalMethods::initText(dirname(dirname(__FILE__)) . $DS . 'base' . $DS . 'locale.php');
 
     $infoPrefix = '';
 
