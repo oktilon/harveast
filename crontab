@@ -23,6 +23,7 @@ MAILTO = ""
 #*	*	*	*	*	php /var/www/html/public/base/check_work_speed.php
 
 # Production mode (every eight minutes partially)
+*/8	*	*	*	*	php /var/www/html/public/base/check_work_speed.php -p 1
 1-59/8	*	*	*	*	php /var/www/html/public/base/check_work_speed.php -p 2
 2-59/8	*	*	*	*	php /var/www/html/public/base/check_work_speed.php -p 3
 3-59/8	*	*	*	*	php /var/www/html/public/base/check_work_speed.php -p 4
