@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: harveast\n"
 "POT-Creation-Date: 2020-06-08 13:24+0300\n"
-"PO-Revision-Date: 2020-06-08 13:24+0300\n"
+"PO-Revision-Date: 2020-06-11 12:05+0300\n"
 "Last-Translator: Denis Stovbun <oktilon@gmail.com>\n"
 "Language-Team: \n"
 "Language: ru_RU\n"
@@ -70,7 +70,7 @@ msgstr "Предприятие"
 
 #: base/locale.php:19
 msgid "Export"
-msgstr "Эекспорт"
+msgstr "Экспорт"
 
 #: base/locale.php:20
 msgid "It's need to select orders to export"
@@ -170,7 +170,7 @@ msgstr "Техоперация"
 
 #: base/locale.php:54
 msgid "Track"
-msgstr "Трэк"
+msgstr "Трек"
 
 #: base/locale.php:55
 msgid "Trailer"
