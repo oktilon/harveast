@@ -107,7 +107,7 @@ class JSON
 				if ($user_id > 0) {
 
 					if ($q[0]['dm_roles'] != '') {
-						$r = $DB->select("SELECT * FROM {TABLE_RIGHTS} WHERE user_id = {$user_id} AND right_id IN ({$q[0]['dm_roles']})");
+						$r = $DB->select("SELECT * FROM spr_users_rights WHERE user_id = {$user_id} AND right_id IN ({$q[0]['dm_roles']})");
 						if (!$r) {
 							JSON::log_server($obj->m, $user_id, "rights wrong");
 							echo json_encode(array("status" => "error", "msg" => "Denied rights of access"));
