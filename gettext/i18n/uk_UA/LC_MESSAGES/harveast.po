@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: harveast\n"
-"POT-Creation-Date: 2020-06-08 13:24+0300\n"
-"PO-Revision-Date: 2020-06-08 13:24+0300\n"
+"POT-Creation-Date: 2020-06-16 13:48+0300\n"
+"PO-Revision-Date: 2020-06-16 13:49+0300\n"
 "Last-Translator: Denis Stovbun <oktilon@gmail.com>\n"
 "Language-Team: \n"
 "Language: uk_UA\n"
@@ -160,42 +160,46 @@ msgstr "Держ.номер"
 msgid "Recalculation"
 msgstr "Перерахунок"
 
-#: base/locale.php:51
+#: base/locale.php:50
+msgid "Rewrite"
+msgstr "Перезаписати"
+
+#: base/locale.php:52
 msgid "Server is not available"
 msgstr "Сервер недосяжний"
 
-#: base/locale.php:53
+#: base/locale.php:54
 msgid "Tech.operation"
 msgstr "Техоперація"
 
-#: base/locale.php:54
+#: base/locale.php:55
 msgid "Track"
 msgstr "Трек"
 
-#: base/locale.php:55
+#: base/locale.php:56
 msgid "Trailer"
 msgstr "Причіпне"
 
-#: base/locale.php:57
+#: base/locale.php:58
 msgid "Vehicle"
 msgstr "Трансп.засіб"
 
-#: base/locale.php:59
+#: base/locale.php:60
 msgid "Wrong date interval"
 msgstr "Помилка періоду"
 
-#: base/locale.php:60
+#: base/locale.php:61
 msgid "wrong joint id"
 msgstr "помилкова операція"
 
-#: base/locale.php:61
+#: base/locale.php:62
 msgid "Wrong params"
 msgstr "Помилкові параметри"
 
-#: base/locale.php:62
+#: base/locale.php:63
 msgid "Wrong params. Relocation log"
 msgstr "Помилкові параметри. Лог переїздів"
 
-#: base/locale.php:63
+#: base/locale.php:64
 msgid "Wrong order"
 msgstr "Помилковий наряд"

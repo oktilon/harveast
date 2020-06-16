@@ -47,6 +47,7 @@
 
         'reg_plate'                 => _("Reg.plate"),
         'recalculation'             => _('Recalculation'),
+        'rewrite'                   => _('Rewrite'),
 
         'server_isnt_available'     => _('Server is not available'),
 
