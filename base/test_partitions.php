@@ -5,6 +5,7 @@
     // $_REQUEST['obj'] = '{"p":1}';
 
     $PGA = connect_db::PostgreSql(null, PG_ADMIN, PG_ADMIN_PWD);
+    if(!$PGA->valid()) die('PG Error ' . $PGA->error);
 
     $deep = '+1 month';
 
