@@ -27,6 +27,7 @@
             if($cmd == 'd') {
                 $deep = str_replace('m', ' month', $arg);
                 if(substr($deep, 0, 1) == 'm') $deep = '-' . substr($deep, 1);
+                Info("deep={$deep}");
                 $cmd = '';
             }
             if($cmd == 'b') {
