@@ -18,15 +18,15 @@
     $init = '';
     $cmd = '';
     $m = [];
-    if($args) {
+    while($args) {
         $arg = array_shift($args);
         if(preg_match('/^\-(\w)$/', $arg, $m)) {
             $cmd = $m[1];
             if($cmd == 'd') $deep = '';
         } else {
             if($cmd == 'd') {
+                if(substr($arg, 0, 1) == 'm') $arg = '-' . substr($arg, 1);
                 $deep = str_replace('m', ' month', $arg);
-                if(substr($deep, 0, 1) == 'm') $deep = '-' . substr($deep, 1);
                 Info("deep={$deep}");
                 $cmd = '';
             }
