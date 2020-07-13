@@ -13,7 +13,7 @@
 		$ok  = true;
 		foreach($obj as $type => $arr) {
 			$q = $DB->prepare("INSERT INTO st_buffer_1c (obj, name) VALUES (:obj, :name);")
-					->bind("obj", $arr)
+					->bind("obj", json_encode($obj, JSON_UNESCAPED_UNICODE))
 					->bind("name", $type)
 					->execute();
 			if(!$q) $ok = false;

@@ -1,13 +1,18 @@
 <?php
     @session_start();
     $DS = DIRECTORY_SEPARATOR;
-    require_once dirname(dirname(__FILE__)) . $DS . 'base' . $DS . 'config.php';
+    $config = dirname(dirname(__FILE__)) . $DS . 'base' . $DS . 'config.php';
+    $vendor = dirname(dirname(__FILE__)) . $DS . 'vendor' . $DS . 'autoload.php';
+    if(!is_file($config)) die('Config!');
+    require_once $config;
     define('PATH_ROOT',			dirname(__FILE__));
     define('PATH_INC',			PATH_ROOT . '/include');
 	define('PATH_CLAS',			PATH_ROOT . '/classes');
 
     require_once PATH_INC . '/autoload.php';
-    require_once dirname(dirname(__FILE__)) . $DS . 'vendor' . $DS . 'autoload.php';
+
+    if(!is_file($vendor)) die('Composer!');
+    require_once $vendor;
 
     $DB = new connect_db();
     $PG = connect_db::PostgreSql();
