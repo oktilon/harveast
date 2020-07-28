@@ -12,8 +12,10 @@
 
         'deleted'                   => _('Deleted'),
         'delete_islands_prmt'       => _("Delete islands less than :"),
+        'delete_order'              => _('Delete order'),
         'double_track'              => _('Double track'),
 
+        'edit_order'                => _('Edit order'),
         'end'                       => _("End"),
         'enterprise'                => _("Enterprise"),
         'export'                    => _('Export'),

@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: harveast\n"
-"POT-Creation-Date: 2020-06-16 13:48+0300\n"
-"PO-Revision-Date: 2020-06-16 13:49+0300\n"
+"POT-Creation-Date: 2020-07-28 09:46+0300\n"
+"PO-Revision-Date: 2020-07-28 09:46+0300\n"
 "Last-Translator: Denis Stovbun <oktilon@gmail.com>\n"
 "Language-Team: \n"
 "Language: ru_RU\n"
@@ -57,149 +57,157 @@ msgid "Delete islands less than :"
 msgstr "Удалить островки менее чем :"
 
 #: base/locale.php:15
+msgid "Delete order"
+msgstr "Удалить наряд"
+
+#: base/locale.php:16
 msgid "Double track"
 msgstr "Двойной след"
 
-#: base/locale.php:17
+#: base/locale.php:18
+msgid "Edit order"
+msgstr "Изменить наряд"
+
+#: base/locale.php:19
 msgid "End"
 msgstr "Окончание"
 
-#: base/locale.php:18
+#: base/locale.php:20
 msgid "Enterprise"
 msgstr "Предприятие"
 
-#: base/locale.php:19
+#: base/locale.php:21
 msgid "Export"
 msgstr "Экспорт"
 
-#: base/locale.php:20
+#: base/locale.php:22
 msgid "It's need to select orders to export"
 msgstr "Необходимо выбрать наряды для экспорта"
 
-#: base/locale.php:22
+#: base/locale.php:24
 msgid "Field"
 msgstr "Поле"
 
-#: base/locale.php:24
+#: base/locale.php:26
 msgid "ha"
 msgstr "га"
 
-#: base/locale.php:25
+#: base/locale.php:27
 msgid "Hired"
 msgstr "Найм"
 
-#: base/locale.php:27
+#: base/locale.php:29
 msgid "Incomplete order data"
 msgstr "Неполные данные наряда"
 
-#: base/locale.php:28
+#: base/locale.php:30
 msgid "Intersection with orders:"
 msgstr "Пересечение с нарядами :"
 
-#: base/locale.php:29
+#: base/locale.php:31
 msgid "Invalid geometry"
 msgstr "Плохая геометрия"
 
-#: base/locale.php:31
+#: base/locale.php:33
 msgid "Joint area"
 msgstr "Совместная площадь"
 
-#: base/locale.php:33
+#: base/locale.php:35
 msgid "Next year"
 msgstr "След. год"
 
-#: base/locale.php:34
+#: base/locale.php:36
 msgid "No fieldwork"
 msgstr "Нет полевых работ"
 
-#: base/locale.php:35
+#: base/locale.php:37
 msgid "No Gps"
 msgstr "Нет трекера"
 
-#: base/locale.php:36
+#: base/locale.php:38
 msgid "No messages"
 msgstr "Нет точек"
 
-#: base/locale.php:37
+#: base/locale.php:39
 msgid "No orders found"
 msgstr "Наряды не найдены"
 
-#: base/locale.php:38
+#: base/locale.php:40
 msgid "No valid operation"
 msgstr "Нет валидной ТО"
 
-#: base/locale.php:39
+#: base/locale.php:41
 msgid "No work found"
 msgstr "Нет работ"
 
-#: base/locale.php:40
+#: base/locale.php:42
 msgid "Note"
 msgstr "Примечание"
 
-#: base/locale.php:42
+#: base/locale.php:44
 msgid "Operation width is unknown"
 msgstr "Неизвестная ширина операции"
 
-#: base/locale.php:43
+#: base/locale.php:45
 msgid "Order"
 msgstr "Наряд"
 
-#: base/locale.php:45
+#: base/locale.php:47
 msgid "Parsed"
 msgstr "Трек обработан"
 
-#: base/locale.php:46
+#: base/locale.php:48
 msgid "Points finished"
 msgstr "Точки посчитаны"
 
-#: base/locale.php:48
+#: base/locale.php:50
 msgid "Reg.plate"
 msgstr "Гос.номер"
 
-#: base/locale.php:49
+#: base/locale.php:51
 msgid "Recalculation"
 msgstr "Перерасчет"
 
-#: base/locale.php:50
+#: base/locale.php:52
 msgid "Rewrite"
 msgstr "Перезаписать"
 
-#: base/locale.php:52
+#: base/locale.php:54
 msgid "Server is not available"
 msgstr "Сервер недоступен"
 
-#: base/locale.php:54
+#: base/locale.php:56
 msgid "Tech.operation"
 msgstr "Техоперация"
 
-#: base/locale.php:55
+#: base/locale.php:57
 msgid "Track"
 msgstr "Трек"
 
-#: base/locale.php:56
+#: base/locale.php:58
 msgid "Trailer"
 msgstr "Прицепное"
 
-#: base/locale.php:58
+#: base/locale.php:60
 msgid "Vehicle"
 msgstr "Трансп.средство"
 
-#: base/locale.php:60
+#: base/locale.php:62
 msgid "Wrong date interval"
 msgstr "Неверный период"
 
-#: base/locale.php:61
+#: base/locale.php:63
 msgid "wrong joint id"
 msgstr "неверный код обработки"
 
-#: base/locale.php:62
+#: base/locale.php:64
 msgid "Wrong params"
 msgstr "Неверные параметры"
 
-#: base/locale.php:63
+#: base/locale.php:65
 msgid "Wrong params. Relocation log"
 msgstr "Неверные параметры. Лог переездов"
 
-#: base/locale.php:64
+#: base/locale.php:66
 msgid "Wrong order"
 msgstr "Неверный наряд"
