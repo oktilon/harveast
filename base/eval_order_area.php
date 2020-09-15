@@ -80,7 +80,7 @@ try {
     ];
     if($ord_only) {
         $lst = implode(',', $ord_only);
-        $flt[] = "id IN{$lst}";
+        $flt[] = "id IN({$lst})";
     }
     /** @var WorkOrder[] */
     $orders = WorkOrder::getList($flt, 'd_beg, car');
