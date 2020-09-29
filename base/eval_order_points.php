@@ -100,6 +100,7 @@ try {
     $messages = OrderLog::getMessages($iid, $tBeg, $tEnd);
     if (!$messages) {
         if(OrderLog::$error) {
+            $ord->finalWialonError();
             throw new Exception("WialonError: " . OrderLog::$error, 1);
         } else {
             $ord->finalNoMessages();
