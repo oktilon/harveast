@@ -127,6 +127,7 @@ $valid = '';
 if(!$flt) {
     $cnt = TechOperation::validateOperations();
     $valid = ", validated $cnt TechOp.";
+    GlobalMethods::pidUnLock();
 }
 
 $time = time() - $time;
