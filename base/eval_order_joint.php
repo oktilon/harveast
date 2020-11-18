@@ -68,34 +68,36 @@ try {
         OrderJoint::resetOrdersList();
 
         foreach($rows as $ojo) {
-            $oj = OrderJoint::checkJoint($ojo);
-            if($oj->id < 0) {
-                $msg = sprintf("%d-%d [%s - %s] (%d) DB error : %s",
-                            $oj->geo,
-                            $oj->techop,
-                            $oj->d_beg->format('Y-m-d H:i:s'),
-                            $oj->d_end->format('Y-m-d H:i:s'),
-                            count(OrderJoint::$total),
-                            $DB->error
-                );
-                Info($msg);
-            } else {
-                if($oj->needRecalc()) {
-                    echo " joint:{$oj->id} ";
-                    $oj->evalJointArea(0);
-                    $oj->setRecalc(false);
-                    $oj->save();
+            if($ojo->validForCheck()) {
+                $oj = OrderJoint::checkJoint($ojo);
+                if($oj->id < 0) {
+                    $msg = sprintf("%d-%d [%s - %s] (%d) DB error : %s",
+                                $oj->geo,
+                                $oj->techop,
+                                $oj->d_beg->format('Y-m-d H:i:s'),
+                                $oj->d_end->format('Y-m-d H:i:s'),
+                                OrderJoint::$total,
+                                $DB->error
+                    );
+                    Info($msg);
+                } else {
+                    if($oj->needRecalc()) {
+                        Info("Eval joint:{$oj->id} reason: " . OrderJoint::$recalcReason);
+                        $oj->evalJointArea(0);
+                        $oj->setRecalc(false);
+                        $oj->save();
+                    }
                 }
             }
-            echo "\n";
-            //var_dump($oj);
-            //die();
         }
 
         OrderJoint::markOrdersFromList();
 
         $step--;
     }
+
+    OrderJoint::purgeEmptyJoints();
+
 } catch(Exception $e) {
     echo PHP_EOL;
     Info('Exception : ' . $e->getMessage());
