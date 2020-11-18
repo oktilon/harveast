@@ -15,3 +15,5 @@ select * from gps_joint gj where techop =233 and geo =5865
 select * from gps_joint_items gj where jnt_id =23766
 
 
+-- 10756
+-- 10760
