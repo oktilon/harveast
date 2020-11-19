@@ -10,9 +10,10 @@ $q = $DB->prepare("SELECT count(*) from gps_order_log gol
                 -- set gol.flags = gol.flags & ~8
                 where gol.flags & 8 and (gj.flags & 2 OR gj.id IS NULL)")
     ->execute();
+$dt = time() - $t;
 if($q) {
     $cleaned = $DB->affectedRows();
-    Info("Query finished. Updated $cleaned rows.");
+    Info("Query ($dt sec.) finished. Updated $cleaned rows.");
 } else {
-    Info("Query error: " . $DB->error);
+    Info("Query ($dt sec.) error: " . $DB->error);
 }
