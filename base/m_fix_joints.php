@@ -12,10 +12,18 @@ $lst = $DB->prepare("SELECT * FROM gps_joint_bak
 $cnt = count($lst);
 echo "Got $cnt backed joints\n";
 
+$cntOne = 0;
+$cntMul = 0;
+$cntNo  = 0;
+
 foreach($lst as $row) {
     $jnts = $DB->prepare("SELECT *
                     FROM gps_joint
-                    WHERE *")
+                    WHERE   geo    = :g
+                        AND techop = :t
+                        AND d_beg  < :e
+                        AND d_end  > :b
+                    ORDER BY d_beg")
                 ->bind('g', $row['geo'])
                 ->bind('t', $row['techop'])
                 ->bind('b', $row['d_beg'])
@@ -29,9 +37,16 @@ foreach($lst as $row) {
         // $oj = new OrderJoint($jnt['id']);
         // $oj->close($area, $flgBy, $row['close_note'], intval($row['close_user']));
         echo '.';
+        $cntOne++;
     } elseif(count($jnts) > 1) {
         echo "+";
+        $cntMul++;
     } else {
+        $cntNo++;
         echo "x";
     }
 }
+
+echo "Good  = $cntOne\n" .
+     "Multy = $cntMul\n" .
+     "Bad   = $cntNo\n";
