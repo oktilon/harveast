@@ -45,10 +45,17 @@ foreach($lst as $row) {
         } else {
             $area = floatval($row['area']);
             $flgBy = $flg & (OrderJoint::FLAG_BY_TOTAL | OrderJoint::FLAG_BY_USER);
-            // $oj = new OrderJoint($jnt['id']);
-            // $oj->close($area, $flgBy, $row['close_note'], intval($row['close_user']));
+            ob_start();
+            $oj = new OrderJoint($jnt['id']);
+            $oj->close($area, $flgBy, $row['close_note'], intval($row['close_user']));
+            ob_end_clean();
+            $oldId = $row['id'];
+            $q = $DB->prepare("UPDATE gps_joint_bak
+                            SET flags = flags | $flagRestored
+                            WHERE id = $oldId")
+                    ->execute();
+            echo $q ? '.' : "[{$DB->error}]";
         }
-        echo '.';
         $cntOne++;
     } elseif($cnt > 1) {
         $cl = 0;
@@ -64,7 +71,7 @@ foreach($lst as $row) {
         echo "x";
     }
 }
-
+echo "\n\n";
 echo "Good  = $cntOne ($cntCls closed)\n" .
      "Multy = $cntMul\n" .
      "Bad   = $cntNo\n";
