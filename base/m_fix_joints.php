@@ -17,6 +17,7 @@ $cnt = count($lst);
 echo "Got $cnt backed joints\n";
 
 $cntOne = 0;
+$cntCls = 0;
 $cntMul = 0;
 $cntNo  = 0;
 
@@ -37,14 +38,26 @@ foreach($lst as $row) {
     if($cnt == 1) {
         $jnt = $jnts[0];
         $flg = intval($row['flags']);
-        $area = floatval($row['area']);
-        $flgBy = $flg & (OrderJoint::FLAG_BY_TOTAL | OrderJoint::FLAG_BY_USER);
-        // $oj = new OrderJoint($jnt['id']);
-        // $oj->close($area, $flgBy, $row['close_note'], intval($row['close_user']));
+        $xFlg = intval($jnt['flags']);
+        if($xFlg & $f) {
+            echo 'o';
+            $cntCls++;
+        } else {
+            $area = floatval($row['area']);
+            $flgBy = $flg & (OrderJoint::FLAG_BY_TOTAL | OrderJoint::FLAG_BY_USER);
+            // $oj = new OrderJoint($jnt['id']);
+            // $oj->close($area, $flgBy, $row['close_note'], intval($row['close_user']));
+        }
         echo '.';
         $cntOne++;
     } elseif($cnt > 1) {
-        echo "({$cnt})";
+        $cl = 0;
+        foreach($jnts as $jnt) {
+            if(intval($jnt['flags']) & $f) {
+                $cl++;
+            }
+        }
+        echo "({$cnt},c:{$cl})";
         $cntMul++;
     } else {
         $cntNo++;
@@ -52,6 +65,6 @@ foreach($lst as $row) {
     }
 }
 
-echo "Good  = $cntOne\n" .
+echo "Good  = $cntOne ($cntCls closed)\n" .
      "Multy = $cntMul\n" .
      "Bad   = $cntNo\n";
