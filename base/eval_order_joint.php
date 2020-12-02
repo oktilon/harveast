@@ -81,7 +81,7 @@ try {
                     );
                     Info($msg);
                 } else {
-                    if($oj->needRecalc()) {
+                    if($oj->needRecalc() && $oj->canRecalc()) {
                         Info("Eval joint:{$oj->id} reason: " . OrderJoint::$recalcReason);
                         $oj->evalJointArea(0);
                         $oj->setRecalc(false);

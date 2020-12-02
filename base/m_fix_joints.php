@@ -67,8 +67,25 @@ foreach($lst as $row) {
         echo "({$cnt},c:{$cl})";
         $cntMul++;
     } else {
+        $gid = $row['geo'];
+        /*$geo = $DB->prepare("SELECT * FROM gps_geofence WHERE id = $gid")
+        $jnts = $DB->prepare("SELECT *
+                        FROM gps_joint
+                        WHERE   geo    = :g
+                            AND techop = :t
+                            AND d_beg  < :e
+                            AND d_end  > :b
+                        ORDER BY d_beg")
+                    ->bind('g', $row['geo'])
+                    ->bind('t', $row['techop'])
+                    ->bind('b', $row['d_beg'])
+                    ->bind('e', $row['d_end'])
+                    ->execute_all();
+        $cnt = count($jnts);*/
+
+
         $cntNo++;
-        echo "x";
+        echo "[$gid]";
     }
 }
 echo "\n\n";
