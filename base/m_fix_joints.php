@@ -4,9 +4,13 @@ InfoPrefix(__FILE__);
 
 $t = time();
 echo "Get backup\n";
+
+$flagRestored = 0x1000;
+
 $f = OrderJoint::FLAG_IS_CLOSED;
 $lst = $DB->prepare("SELECT * FROM gps_joint_bak
-                WHERE flags & 2
+                WHERE flags & $f
+                    AND flags & $flagRestored = 0
                 ORDER BY d_beg")
         ->execute_all();
 $cnt = count($lst);
@@ -29,7 +33,8 @@ foreach($lst as $row) {
                 ->bind('b', $row['d_beg'])
                 ->bind('e', $row['d_end'])
                 ->execute_all();
-    if(count($jnts) == 1) {
+    $cnt = count($jnts);
+    if($cnt == 1) {
         $jnt = $jnts[0];
         $flg = intval($row['flags']);
         $area = floatval($row['area']);
@@ -38,8 +43,8 @@ foreach($lst as $row) {
         // $oj->close($area, $flgBy, $row['close_note'], intval($row['close_user']));
         echo '.';
         $cntOne++;
-    } elseif(count($jnts) > 1) {
-        echo "+";
+    } elseif($cnt > 1) {
+        echo "({$cnt})";
         $cntMul++;
     } else {
         $cntNo++;
