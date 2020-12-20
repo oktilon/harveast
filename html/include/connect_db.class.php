@@ -16,6 +16,9 @@ class connect_db {
 
     public $params = [];
 
+    public $debug_cache = [];
+    public $debug_mode = false;
+
     /**
     * Конструктор подключения к БД
     *
@@ -93,12 +96,35 @@ class connect_db {
     public function serverVersion() { return $this->valid() ? $this->conn->getAttribute(PDO::ATTR_SERVER_VERSION) : 'no-conn'; }
 
 
+    public function startDebug() {
+        $this->debug_cache = [];
+        $this->debug_mode = true;
+    }
+
+    public function stopDebug() {
+        $ret = $this->debug_cache;
+        $this->debug_cache = [];
+        $this->debug_mode = false;
+        return $ret;
+    }
+
+    public function debugQuery() {
+        if(!$this->debug_mode) return;
+        $this->debug_cache[] = $this->sql;
+        if($this->params) {
+            $this->debug_cache[] = $this->params;
+        }
+    }
+
     private function fillStmtError() {
         $err = $this->lastStmt->errorCode();
         $this->error = $err != 0 ? "Error:$err" : '';
         $this->errInfo = $this->lastStmt->errorInfo();
         if(isset($this->errInfo[2])) {
             $this->error = $this->errInfo[2];
+        }
+        if($err != 0 && $this->error && $this->debug_mode) {
+            $this->debug_cache[] = "ERR#{$err}: {$this->error}";
         }
     }
 
@@ -108,6 +134,9 @@ class connect_db {
         $this->errInfo = $this->conn->errorInfo();
         if(isset($this->errInfo[2])) {
             $this->error = $this->errInfo[2];
+        }
+        if($err != 0 && $this->error && $this->debug_mode) {
+            $this->debug_cache[] = "ERR#{$err}: {$this->error}";
         }
     }
 
@@ -168,6 +197,7 @@ class connect_db {
     */
     public function select($query, $fetchType = PDO::FETCH_ASSOC) {
         $this->sql = $query;
+        $this->debugQuery();
         $this->lastStmt = $this->conn->query($query, $fetchType);
         $this->fillError();
         if ($this->lastStmt === FALSE) {
@@ -198,6 +228,7 @@ class connect_db {
     public function select_dict($query, $key_type = PDO::PARAM_INT) {
         $ret = [];
         $this->sql = $query;
+        $this->debugQuery();
         $this->lastStmt = $this->conn->query($query, PDO::FETCH_NUM);
         if($this->lastStmt === FALSE) {
             $this->fillError();
@@ -312,12 +343,14 @@ class connect_db {
     }
 
     public function execute() {
+        $this->debugQuery();
         $ret = $this->lastStmt->execute();
         $this->fillStmtError();
         return $ret;
     }
 
     public function execute_row($type = PDO::FETCH_ASSOC, $default = []) {
+        $this->debugQuery();
         $ok = $this->lastStmt->execute();
         $this->fillStmtError();
         if($ok) return $this->lastStmt->fetch($type);
@@ -325,6 +358,7 @@ class connect_db {
     }
 
     public function execute_scalar($default = FALSE) {
+        $this->debugQuery();
         $ok = $this->lastStmt->execute();
         $this->fillStmtError();
         if($ok) return $this->fetchScalar($default);
@@ -332,6 +366,7 @@ class connect_db {
     }
 
     public function execute_all($type = PDO::FETCH_ASSOC, $default = []) {
+        $this->debugQuery();
         $ok = $this->lastStmt->execute();
         $this->fillStmtError();
         if($ok) return $this->lastStmt->fetchAll($type);
