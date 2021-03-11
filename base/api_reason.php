@@ -92,7 +92,7 @@ function setReasonNext($dat) {
     $arg = $DB->select_row("SELECT * FROM gps_car_log_item WHERE log_id = ".$dat['log_id']." and tm = (".$dat['tm']." + 15) and ROUND(tm_move / 60, 0) < 4");
     if(is_array($arg) && isset($arg['id'])) {
         $date = new DateTime();
-        $DB->prepare("UPDATE gps_car_log_item SET note = :n, reason = :r, dt_last = :d WHERE id = :i");
+        $DB->prepare("UPDATE gps_car_log_item SET reason = :r, dt_last = :d WHERE id = :i");
         $DB->bind('r', $dat['reason'])
             ->bind('d', $date->format('Y-m-d H:i:s'))
             ->bind('i', $arg['id']);
@@ -114,7 +114,7 @@ function setReasonPrev($dat) {
     $arg = $DB->select_row("SELECT * FROM gps_car_log_item WHERE log_id = ".$dat['log_id']." and tm = (".$dat['tm']." - 15) and ROUND(tm_move / 60, 0) < 4");
     if(is_array($arg) && isset($arg['id'])) {
         $date = new DateTime();
-        $DB->prepare("UPDATE gps_car_log_item SET note = :n, reason = :r, dt_last = :d WHERE id = :i");
+        $DB->prepare("UPDATE gps_car_log_item SET reason = :r, dt_last = :d WHERE id = :i");
         $DB->bind('r', $dat['reason'])
             ->bind('d', $date->format('Y-m-d H:i:s'))
             ->bind('i', $arg['id']);
