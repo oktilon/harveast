@@ -86,7 +86,7 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
     }
 }
 
-public function setReasonNext($dat) {
+function setReasonNext($dat) {
     global $DB;
     $arg = '';
     $arg = $DB->select_row("SELECT * FROM gps_car_log_item WHERE log_id = ".$dat['log_id']." and tm = (".$dat['tm']." + 15) and ROUND(tm_move / 60, 0) < 4");
@@ -108,7 +108,7 @@ public function setReasonNext($dat) {
     return true;
 }
 
-public function setReasonPrev($dat) {
+function setReasonPrev($dat) {
     global $DB;
     $arg = '';
     $arg = $DB->select_row("SELECT * FROM gps_car_log_item WHERE log_id = ".$dat['log_id']." and tm = (".$dat['tm']." - 15) and ROUND(tm_move / 60, 0) < 4");
