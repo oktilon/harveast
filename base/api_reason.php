@@ -79,7 +79,7 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
             $arr['tm'] = $rows[0]['tm'];
             $arr['log_id'] = $rows[0]['log_id'];
             $arr['base_tm'] = $rows[0]['tm'];
-            $this->setReasonNext($arr);
+            setReasonNext($arr);
             echo "\nlog item  - ".$rows[0]['id'];
             file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\nupdate id ----- ".print_r($rows[0]['id'],1)." ------ reason ---------- ".print_r($val['reason_variant_id'],1), FILE_APPEND);
         }
@@ -98,12 +98,12 @@ function setReasonNext($dat) {
             ->bind('i', $arg['id']);
         $r = $DB->execute();
         $dat['tm'] = $arg['tm'];
-        $this->setReasonNext($dat);
+        setReasonNext($dat);
     }
     else
     {
         $dat['tm'] = $dat['base_tm'];
-        $this->setReasonPrev($dat);
+        setReasonPrev($dat);
     }
     return true;
 }
@@ -120,7 +120,7 @@ function setReasonPrev($dat) {
             ->bind('i', $arg['id']);
         $r = $DB->execute();
         $dat['tm'] = $arg['tm'];
-        $this->setReasonPrev($dat);
+        setReasonPrev($dat);
     }
     return true;
 }
