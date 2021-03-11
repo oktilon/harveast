@@ -74,8 +74,53 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
                     SET reason = ".$val['reason_variant_id']."
                     where id = ".$rows[0]['id'];
             $log = $DB->select($sel);
+
+            $arr['reason'] = $val['reason_variant_id'];
+            $arr['tm'] = $rows[0]['tm'];
+            $arr['log_id'] = $rows[0]['log_id'];
+            $arr['base_tm'] = $rows[0]['tm'];
+            $this->setReasonNext($arr);
             echo "\nlog item  - ".$rows[0]['id'];
             file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\nupdate id ----- ".print_r($rows[0]['id'],1)." ------ reason ---------- ".print_r($val['reason_variant_id'],1), FILE_APPEND);
         }
     }
+}
+
+public function setReasonNext($dat) {
+    global $DB;
+    $arg = '';
+    $arg = $DB->select_row("SELECT * FROM gps_car_log_item WHERE log_id = ".$dat['log_id']." and tm = (".$dat['tm']." + 15) and ROUND(tm_move / 60, 0) < 4");
+    if(is_array($arg) && isset($arg['id'])) {
+        $date = new DateTime();
+        $DB->prepare("UPDATE gps_car_log_item SET note = :n, reason = :r, dt_last = :d WHERE id = :i");
+        $DB->bind('r', $dat['reason'])
+            ->bind('d', $date->format('Y-m-d H:i:s'))
+            ->bind('i', $arg['id']);
+        $r = $DB->execute();
+        $dat['tm'] = $arg['tm'];
+        $this->setReasonNext($dat);
+    }
+    else
+    {
+        $dat['tm'] = $dat['base_tm'];
+        $this->setReasonPrev($dat);
+    }
+    return true;
+}
+
+public function setReasonPrev($dat) {
+    global $DB;
+    $arg = '';
+    $arg = $DB->select_row("SELECT * FROM gps_car_log_item WHERE log_id = ".$dat['log_id']." and tm = (".$dat['tm']." - 15) and ROUND(tm_move / 60, 0) < 4");
+    if(is_array($arg) && isset($arg['id'])) {
+        $date = new DateTime();
+        $DB->prepare("UPDATE gps_car_log_item SET note = :n, reason = :r, dt_last = :d WHERE id = :i");
+        $DB->bind('r', $dat['reason'])
+            ->bind('d', $date->format('Y-m-d H:i:s'))
+            ->bind('i', $arg['id']);
+        $r = $DB->execute();
+        $dat['tm'] = $arg['tm'];
+        $this->setReasonPrev($dat);
+    }
+    return true;
 }
