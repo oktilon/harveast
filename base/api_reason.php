@@ -89,7 +89,7 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
 function setReasonNext($dat) {
     global $DB;
     $arg = '';
-    $arg = $DB->select_row("SELECT * FROM gps_car_log_item WHERE log_id = ".$dat['log_id']." and tm = (".$dat['tm']." + 15) and ROUND(tm_move / 60, 0) < 4");
+    $arg = $DB->select_row("SELECT * FROM gps_car_log_item WHERE log_id = ".$dat['log_id']." AND tm = (".$dat['tm']." + 15) AND ROUND(tm_move / 60, 0) < 4");
     if(is_array($arg) && isset($arg['id'])) {
         $date = new DateTime();
         $DB->prepare("UPDATE gps_car_log_item SET reason = :r, dt_last = :d WHERE id = :i");
@@ -111,7 +111,7 @@ function setReasonNext($dat) {
 function setReasonPrev($dat) {
     global $DB;
     $arg = '';
-    $arg = $DB->select_row("SELECT * FROM gps_car_log_item WHERE log_id = ".$dat['log_id']." and tm = (".$dat['tm']." - 15) and ROUND(tm_move / 60, 0) < 4");
+    $arg = $DB->select_row("SELECT * FROM gps_car_log_item WHERE log_id = ".$dat['log_id']." AND tm = (".$dat['tm']." - 15) AND ROUND(tm_move / 60, 0) < 4 AND reason = 0");
     if(is_array($arg) && isset($arg['id'])) {
         $date = new DateTime();
         $DB->prepare("UPDATE gps_car_log_item SET reason = :r, dt_last = :d WHERE id = :i");
