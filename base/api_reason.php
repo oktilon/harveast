@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__DIR__) . '/html/sess.php';
+date_default_timezone_set('Europe/Kiev');
 file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\n\ndate ----- ".date("Y-m-d H:i:s"), FILE_APPEND);
 $curl = curl_init();
 curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
