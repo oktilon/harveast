@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__DIR__) . '/html/sess.php';
+date_default_timezone_set('Europe/Kiev');
 InfoPrefix(__FILE__);
 $_REQUEST['obj'] = '{"p":1}';
 
