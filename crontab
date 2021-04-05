@@ -4,6 +4,7 @@ MAILTO = ""
 0	23  	*	*	5	php /var/www/html/public/base/test_partitions.php
 
 30	*	*	*	*	php /var/www/html/public/base/load_wialon_resources.php
+30	*	*	*	*	php /var/www/html/public/base/load_wialon_drivers.php
 0	22	*	*	*	php /var/www/html/public/base/load_wialon_items.php
 0	*	*	*	*	php /var/www/html/public/base/load_1c.php
 
