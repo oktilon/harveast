@@ -211,3 +211,7 @@ msgstr "Неверные параметры. Лог переездов"
 #: base/locale.php:66
 msgid "Wrong order"
 msgstr "Неверный наряд"
+
+#: base/locale.php:67
+msgid "Drv"
+msgstr "Водитель"

@@ -211,3 +211,7 @@ msgstr "Помилкові параметри. Лог переїздів"
 #: base/locale.php:66
 msgid "Wrong order"
 msgstr "Помилковий наряд"
+
+#: base/locale.php:67
+msgid "Drv"
+msgstr "Водій"
