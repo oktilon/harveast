@@ -14,6 +14,7 @@
         'delete_islands_prmt'       => _("Delete islands less than :"),
         'delete_order'              => _('Delete order'),
         'double_track'              => _('Double track'),
+        'drv'                       => _('Drv'),
 
         'edit_order'                => _('Edit order'),
         'end'                       => _("End"),
