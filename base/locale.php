@@ -14,7 +14,6 @@
         'delete_islands_prmt'       => _("Delete islands less than :"),
         'delete_order'              => _('Delete order'),
         'double_track'              => _('Double track'),
-        'drv'                       => _('Drv'),
 
         'edit_order'                => _('Edit order'),
         'end'                       => _("End"),
@@ -65,5 +64,6 @@
         'wrong_params'              => _('Wrong params'),
         'wrong_params_rel_log'      => _('Wrong params. Relocation log'),
         'wrong_order'               => _('Wrong order'),
+        'drv'                       => _('Drv'),
     ];
 
