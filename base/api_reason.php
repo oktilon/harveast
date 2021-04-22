@@ -86,7 +86,7 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
         }
     }
 
-    $min = date("i",time());
+    /*$min = date("i",time());
     if($min < 15)
         $minVal = 0;
     elseif($min < 30)
@@ -97,12 +97,17 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
         $minVal = 45;
     $hor = date("H",time());
     $horArray = array('07' => 0, '08' => 1, '09' => 2, '10' => 3, '11' => 4, '12' => 5, '13' => 6, '14' => 7, '15' => 8, '16' => 9, '17' => 10, '18' => 11, '19' => 12, '20' => 13, '21' => 14, '22' => 15, '23' => 16, '00' => 17, '01' => 18, '02' => 19, '03' => 20, '04' => 21, '05' => 22, '06' => 23);
-    $gpsCarLogItemTm = $horArray[$hor] * 4 * 15 + $minVal;
-    $sel = " SELECT c.id as car_id, c.ts_number, c.ts_gps_name, l.dt, li.*
+    $gpsCarLogItemTm = $horArray[$hor] * 4 * 15 + $minVal;*/
+    /*$sel = " SELECT c.id as car_id, c.ts_number, c.ts_gps_name, l.dt, li.*
                     FROM gps_carlist c
                         JOIN gps_car_log l ON c.id = l.car AND l.dt = DATE_FORMAT('".date("Y-m-d H:i:s", $val['message_send_timestamp'])."', '%Y-%m-%d')
                         JOIN gps_car_log_item li ON li.log_id = l.id AND li.tm = ".$gpsCarLogItemTm."
-                    WHERE reason IN (43, 23, 39)";
+                    WHERE reason IN (43, 23, 39)";*/
+    $sel = "SELECT l.dt, li.log_id, MAX(li.tm) AS tm, li.reason
+                    FROM gps_car_log l 
+                        JOIN gps_car_log_item li ON li.log_id = l.id
+                    WHERE li.reason IN (43, 23, 39) AND l.dt = '".date("Y-m-d")."'
+                    GROUP BY li.log_id";
     $rows = $DB->select($sel);
     if(isset($rows[0]['car_id']))
     {
