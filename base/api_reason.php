@@ -106,7 +106,7 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
     $sel = "SELECT l.dt, li.log_id, MAX(li.tm) AS tm, li.reason
                     FROM gps_car_log l 
                         JOIN gps_car_log_item li ON li.log_id = l.id
-                    WHERE li.reason IN (43, 23, 39) AND l.dt = '".date("Y-m-d")."'
+                    WHERE li.reason IN (43, 23, 39, 44) AND l.dt = '".date("Y-m-d")."'
                     GROUP BY li.log_id";
     $rows = $DB->select($sel);
     if(isset($rows[0]['car_id']))
