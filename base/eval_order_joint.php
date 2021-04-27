@@ -1,4 +1,5 @@
 <?php
+file_put_contents("/var/www/html/public/base/".date("Y-m-d")."_order_joint.txt", "\n\nstart ----- ".date("Y-m-d H:i:s"), FILE_APPEND);
 $init = time();
 require_once dirname(__DIR__) . '/html/sess.php';
 $_REQUEST['obj'] = '{"p":1}';
@@ -109,3 +110,4 @@ if(!$geo_only) {
 }
 $dt = time() - $init;
 Info("Ended within $dt sec., Rows: $tot");
+file_put_contents("/var/www/html/public/base/".date("Y-m-d")."_order_joint.txt", "\nstop ----- ".date("Y-m-d H:i:s"), FILE_APPEND);
