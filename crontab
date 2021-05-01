@@ -34,6 +34,6 @@ MAILTO = ""
 7-59/8	*	*	*	*	php /var/www/html/public/base/check_work_speed.php -p 8
 
 */5	*	*	*	*	php /var/www/html/public/base/eval_order_area.php
-*/15	*	*	*	*	php /var/www/html/public/base/eval_order_joint.php
+*/5	*	*	*	*	php /var/www/html/public/base/eval_order_joint.php
 
 */10	*	*	*	*	php /var/www/html/public/base/api_reason.php
