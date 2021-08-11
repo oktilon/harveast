@@ -1,7 +1,7 @@
 <?php
 require_once dirname(__DIR__) . '/html/sess.php';
 date_default_timezone_set('Europe/Kiev');
-file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\n\ndate ----- ".date("Y-m-d H:i:s"), FILE_APPEND);
+//file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\n\ndate ----- ".date("Y-m-d H:i:s"), FILE_APPEND);
 $curl = curl_init();
 curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
 curl_setopt_array($curl, array(
@@ -17,7 +17,7 @@ curl_close($curl);
 $response = json_decode($responseJson, 1);
 if(isset($response['reasons_list']) && is_array($response['reasons_list']) && count($response['reasons_list']) > 0)
 {
-    file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\ncount api give ----- ".print_r(count($response['reasons_list']),1), FILE_APPEND);
+    //file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\ncount api give ----- ".print_r(count($response['reasons_list']),1), FILE_APPEND);
     foreach ($response['reasons_list'] as $key=>$val)
     {
         $min = date("i",$val['message_send_timestamp']);
@@ -48,7 +48,7 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
             if(!isset($cars[0]['id']))
             {
                 echo "\nnot find car - ".$val['tractor_name'];
-                file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\nnot find car ----- ".print_r($val['tractor_name'],1), FILE_APPEND);
+                //file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\nnot find car ----- ".print_r($val['tractor_name'],1), FILE_APPEND);
             }
             else
             {
@@ -59,12 +59,12 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
                 $log = $DB->select($sel);
                 if(!isset($log[0]['id']))
                 {
-                    file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\nnot find log ----- ".date("Y-m-d H:i:s", $val['message_send_timestamp'])." ------- for car ------  ".print_r($val['tractor_name'],1), FILE_APPEND);
+                    //file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\nnot find log ----- ".date("Y-m-d H:i:s", $val['message_send_timestamp'])." ------- for car ------  ".print_r($val['tractor_name'],1), FILE_APPEND);
                     echo "\nnot find log - ".date("Y-m-d H:i:s", $val['message_send_timestamp'])." for car - ".$val['tractor_name'];
                 }
                 else
                 {
-                    file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\nnot find log item  ----- ".date("Y-m-d H:i:s", $val['message_send_timestamp'])." ------- for car ------  ".print_r($val['tractor_name'],1)." ------ tm ---------- ".print_r($gpsCarLogItemTm,1), FILE_APPEND);
+                    //file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\nnot find log item  ----- ".date("Y-m-d H:i:s", $val['message_send_timestamp'])." ------- for car ------  ".print_r($val['tractor_name'],1)." ------ tm ---------- ".print_r($gpsCarLogItemTm,1), FILE_APPEND);
                     echo "\nnot find log item - ".date("Y-m-d H:i:s", $val['message_send_timestamp'])." for car - ".$val['tractor_name']." tm - ".$gpsCarLogItemTm;
                 }
             }
@@ -82,7 +82,7 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
             $arr['base_tm'] = $rows[0]['tm'];
             setReasonNext($arr);
             echo "\nlog item  - ".$rows[0]['id'];
-            file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\nupdate id ----- ".print_r($rows[0]['id'],1)." ------ reason ---------- ".print_r($val['reason_variant_id'],1), FILE_APPEND);
+            //file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\nupdate id ----- ".print_r($rows[0]['id'],1)." ------ reason ---------- ".print_r($val['reason_variant_id'],1), FILE_APPEND);
         }
     }
 
