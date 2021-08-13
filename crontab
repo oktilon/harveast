@@ -37,4 +37,4 @@ MAILTO = ""
 */5	*	*	*	*	php /var/www/html/public/base/eval_order_joint.php
 
 */10	*	*	*	*	php /var/www/html/public/base/api_reason.php
-0	    0	*	*	*	php /var/www/html/public/base/api_car_reason.php
+0	    0	*	*	*	php /var/www/html/public/base/api_car_phone.php
