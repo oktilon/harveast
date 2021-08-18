@@ -80,10 +80,11 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
             if(!isset($reas['id'])) {
                 $date = new DateTime();
                 $DB->prepare("INSERT INTO gps_car_reasons 
-                                (car_id, reason_id, gps_car_log_item_id, tm, user_name, from_set)
-                                VALUES (:car_id, :reason_id, :gps_car_log_item_id, :tm, :user_name, :from_set)");
+                                (car_id, reason_id, date, gps_car_log_item_id, tm, user_name, from_set)
+                                VALUES (:car_id, :reason_id, :date, :gps_car_log_item_id, :tm, :user_name, :from_set)");
                 $DB->bind('car_id', $rows[0]['car_id'])
                    ->bind('reason_id', $val['reason_variant_id'])
+                    ->bind('date', date("Y-m-d H:is:s", $val['message_send_timestamp']))
                    ->bind('gps_car_log_item_id', $rows[0]['id'])
                    ->bind('tm', $gpsCarLogItemTm)
                    ->bind('user_name', $val['fio'])
@@ -92,6 +93,7 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
             }
 
             $arr['reason'] = $val['reason_variant_id'];
+            $arr['message_send_timestamp'] = $val['message_send_timestamp'];
             $arr['tm'] = $rows[0]['tm'];
             $arr['log_id'] = $rows[0]['log_id'];
             $arr['base_tm'] = $rows[0]['tm'];
@@ -129,6 +131,7 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
         foreach ($rows as $row)
         {
             $arr['reason'] = $row['reason'];
+            $arr['message_send_timestamp'] = $val['message_send_timestamp'];
             $arr['tm'] = $row['tm'];
             $arr['log_id'] = $row['log_id'];
             $arr['base_tm'] = $row['tm'];
@@ -151,10 +154,11 @@ function setReasonNext($dat, $row, $dop = '') {
         $reas = $DB->select_row("SELECT * FROM gps_car_reasons WHERE car_id = ".$row['car_id']." AND gps_car_log_item_id = ".$row['id']." AND tm = ".($dat['tm'] + 15));
         if(!isset($reas['id'])) {
             $DB->prepare("INSERT INTO gps_car_reasons 
-                                (car_id, reason_id, gps_car_log_item_id, tm, is_auto, from_set)
-                                VALUES (:car_id, :reason_id, :gps_car_log_item_id, :tm, :is_auto, :from_set)");
+                                (car_id, reason_id, date, gps_car_log_item_id, tm, is_auto, from_set)
+                                VALUES (:car_id, :reason_id, :date, :gps_car_log_item_id, :tm, :is_auto, :from_set)");
             $DB->bind('car_id', $row['car_id'])
                ->bind('reason_id', $dat['reason'])
+                ->bind('date', date("Y-m-d H:is:s", $dat['message_send_timestamp']))
                ->bind('gps_car_log_item_id', $row['id'])
                ->bind('tm', ($dat['tm'] + 15))
                ->bind('is_auto', 1)
@@ -189,10 +193,11 @@ function setReasonPrev($dat, $row) {
         $reas = $DB->select_row("SELECT * FROM gps_car_reasons WHERE car_id = ".$row['car_id']." AND gps_car_log_item_id = ".$row['id']." AND tm = ".($dat['tm'] + 15));
         if(!isset($reas['id'])) {
             $DB->prepare("INSERT INTO gps_car_reasons 
-                                (car_id, reason_id, gps_car_log_item_id, tm, is_auto, from_set)
-                                VALUES (:car_id, :reason_id, :gps_car_log_item_id, :tm, :is_auto, :from_set)");
+                                (car_id, reason_id, date, gps_car_log_item_id, tm, is_auto, from_set)
+                                VALUES (:car_id, :reason_id, :date, :gps_car_log_item_id, :tm, :is_auto, :from_set)");
             $DB->bind('car_id', $row['car_id'])
                ->bind('reason_id', $dat['reason'])
+                ->bind('date', date("Y-m-d H:is:s", $dat['message_send_timestamp']))
                ->bind('gps_car_log_item_id', $row['id'])
                ->bind('tm', ($dat['tm'] + 15))
                ->bind('is_auto', 1)
