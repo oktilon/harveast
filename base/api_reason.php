@@ -84,7 +84,7 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
                                 VALUES (:car_id, :reason_id, :date, :gps_car_log_item_id, :tm, :user_name, :from_set)");
                 $DB->bind('car_id', $rows[0]['car_id'])
                    ->bind('reason_id', $val['reason_variant_id'])
-                    ->bind('date', date("Y-m-d H:is:s", $val['message_send_timestamp']))
+                    ->bind('date', date("Y-m-d H:i:s", $val['message_send_timestamp']))
                    ->bind('gps_car_log_item_id', $rows[0]['id'])
                    ->bind('tm', $gpsCarLogItemTm)
                    ->bind('user_name', $val['fio'])
@@ -158,7 +158,7 @@ function setReasonNext($dat, $row, $dop = '') {
                                 VALUES (:car_id, :reason_id, :date, :gps_car_log_item_id, :tm, :is_auto, :from_set)");
             $DB->bind('car_id', $row['car_id'])
                ->bind('reason_id', $dat['reason'])
-                ->bind('date', date("Y-m-d H:is:s", $dat['message_send_timestamp']))
+                ->bind('date', date("Y-m-d H:i:s", $dat['message_send_timestamp']))
                ->bind('gps_car_log_item_id', $row['id'])
                ->bind('tm', ($dat['tm'] + 15))
                ->bind('is_auto', 1)
@@ -197,7 +197,7 @@ function setReasonPrev($dat, $row) {
                                 VALUES (:car_id, :reason_id, :date, :gps_car_log_item_id, :tm, :is_auto, :from_set)");
             $DB->bind('car_id', $row['car_id'])
                ->bind('reason_id', $dat['reason'])
-                ->bind('date', date("Y-m-d H:is:s", $dat['message_send_timestamp']))
+                ->bind('date', date("Y-m-d H:i:s", $dat['message_send_timestamp']))
                ->bind('gps_car_log_item_id', $row['id'])
                ->bind('tm', ($dat['tm'] + 15))
                ->bind('is_auto', 1)
