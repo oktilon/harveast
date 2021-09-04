@@ -33,7 +33,7 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
         $hor = date("H",$val['message_send_timestamp']);
         $horArray = array('07' => 0, '08' => 1, '09' => 2, '10' => 3, '11' => 4, '12' => 5, '13' => 6, '14' => 7, '15' => 8, '16' => 9, '17' => 10, '18' => 11, '19' => 12, '20' => 13, '21' => 14, '22' => 15, '23' => 16, '00' => 17, '01' => 18, '02' => 19, '03' => 20, '04' => 21, '05' => 22, '06' => 23);
         $gpsCarLogItemTm = $horArray[$hor] * 4 * 15 + $minVal;
-        $sel = " SELECT c.id as car_id, c.ts_number, c.ts_gps_name, l.dt, li.*
+        $sel = " SELECT c.id as car_id, c.ts_number, c.firm, c.ts_gps_name, l.dt, li.*
                     FROM gps_carlist c
                         JOIN gps_car_log l ON c.id = l.car AND l.dt = DATE_FORMAT('".date("Y-m-d H:i:s", $val['message_send_timestamp'])."', '%Y-%m-%d')
                         JOIN gps_car_log_item li ON li.log_id = l.id AND li.tm = ".$gpsCarLogItemTm."
@@ -75,6 +75,31 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
                     SET reason = ".$val['reason_variant_id']."
                     where id = ".$rows[0]['id'];
             $log = $DB->select($sel);
+
+            if($val['reason_variant_id'] == 40 && $val['reason_variant_id'] == 41)
+            {
+                $sel = "SELECT u.email, GROUP_CONCAT(f.firm_id) AS ar_firms
+                            FROM spr_users_send_email e
+                            JOIN spr_users u ON u.id = e.user_id
+                            LEFT JOIN spr_users_firms f ON e.user_id = f.user_id
+                            WHERE e.is_send = 1 AND u.email IS NOT NULL
+                            GROUP BY e.id";
+                $rows = $DB->select($sel);
+                if(isset($rows[0]['email']))
+                {
+                    foreach ($rows as $row)
+                    {
+                        if($row['ar_firms'] != '')
+                        {
+                            $ar_firms = explode(",", $row['ar_firms']);
+                            if(in_array($val['firm'], $ar_firms))
+                                smtpmail($row['email'], $row['email'], 'Простой из за неисправности транспортного средства или прицепного оборудования', 'Добрый день.<br>Информирую о простое '.$rows[0]['ts_number'].' из за неисправности техники или прицепного');
+                        }
+                        else
+                            smtpmail($row['email'], $row['email'], 'Простой из за неисправности транспортного средства или прицепного оборудования', 'Добрый день.<br>Информирую о простое '.$rows[0]['ts_number'].' из за неисправности техники или прицепного');
+                    }
+                }
+            }
 
             $reas = $DB->select_row("SELECT * FROM gps_car_reasons WHERE car_id = ".$rows[0]['car_id']." AND gps_car_log_item_id = ".$rows[0]['id']." AND tm = ".$gpsCarLogItemTm);
             if(!isset($reas['id'])) {
@@ -207,6 +232,109 @@ function setReasonPrev($dat, $row) {
 
         $dat['tm'] = $arg['tm'];
         setReasonPrev($dat);
+    }
+    return true;
+}
+
+
+$configMail['smtp_username'] = 'polomka.techniki@harveast.com';  //Смените на адрес своего почтового ящика.
+$configMail['smtp_port'] = '587'; // Порт работы.
+$configMail['smtp_host'] =  'mail.harveast.com';  //сервер для отправки почты
+$configMail['smtp_password'] = 'OS$H856m0P81Umif729';  //Измените пароль
+$configMail['smtp_debug'] = true;  //Если Вы хотите видеть сообщения ошибок, укажите true вместо false
+$configMail['smtp_charset'] = 'utf-8';	//кодировка сообщений. (windows-1251 или utf-8, итд)
+$configMail['smtp_from'] = 'Agroportal'; //Ваше имя - или имя Вашего сайта. Будет показывать при прочтении в поле "От кого"
+
+function smtpmail($to='', $mail_to, $subject, $message, $headers='') {
+    global $configMail;
+    $SEND =	"Date: ".date("D, d M Y H:i:s") . " UT\r\n";
+    $SEND .= 'Subject: =?'.$configMail['smtp_charset'].'?B?'.base64_encode($subject)."=?=\r\n";
+    if ($headers) $SEND .= $headers."\r\n\r\n";
+    else
+    {
+        $SEND .= "Reply-To: ".$configMail['smtp_username']."\r\n";
+        $SEND .= "To: \"=?".$configMail['smtp_charset']."?B?".base64_encode($to)."=?=\" <$mail_to>\r\n";
+        $SEND .= "MIME-Version: 1.0\r\n";
+        $SEND .= "Content-Type: text/html; charset=\"".$configMail['smtp_charset']."\"\r\n";
+        $SEND .= "Content-Transfer-Encoding: 8bit\r\n";
+        $SEND .= "From: \"=?".$configMail['smtp_charset']."?B?".base64_encode($configMail['smtp_from'])."=?=\" <".$configMail['smtp_username'].">\r\n";
+        $SEND .= "X-Priority: 3\r\n\r\n";
+    }
+    $SEND .=  $message."\r\n";
+    if( !$socket = fsockopen($configMail['smtp_host'], $configMail['smtp_port'], $errno, $errstr, 30) ) {
+        if ($configMail['smtp_debug']) echo $errno."<br>".$errstr;
+        return false;
+    }
+
+    if (!server_parse($socket, "220", __LINE__)) return false;
+
+    fputs($socket, "HELO " . $configMail['smtp_host'] . "\r\n");
+    if (!server_parse($socket, "250", __LINE__)) {
+        if ($configMail['smtp_debug']) echo '<p>Не могу отправить HELO!</p>';
+        fclose($socket);
+        return false;
+    }
+    fputs($socket, "AUTH LOGIN\r\n");
+    if (!server_parse($socket, "334", __LINE__)) {
+        if ($configMail['smtp_debug']) echo '<p>Не могу найти ответ на запрос авторизаци.</p>';
+        fclose($socket);
+        return false;
+    }
+    fputs($socket, base64_encode($configMail['smtp_username']) . "\r\n");
+    if (!server_parse($socket, "334", __LINE__)) {
+        if ($configMail['smtp_debug']) echo '<p>Логин авторизации не был принят сервером!</p>';
+        fclose($socket);
+        return false;
+    }
+    fputs($socket, base64_encode($configMail['smtp_password']) . "\r\n");
+    if (!server_parse($socket, "235", __LINE__)) {
+        if ($configMail['smtp_debug']) echo '<p>Пароль не был принят сервером как верный! Ошибка авторизации!</p>';
+        fclose($socket);
+        return false;
+    }
+    fputs($socket, "MAIL FROM: <".$configMail['smtp_username'].">\r\n");
+    if (!server_parse($socket, "250", __LINE__)) {
+        if ($configMail['smtp_debug']) echo '<p>Не могу отправить комманду MAIL FROM: </p>';
+        fclose($socket);
+        return false;
+    }
+    fputs($socket, "RCPT TO: <" . $mail_to . ">\r\n");
+
+    if (!server_parse($socket, "250", __LINE__)) {
+        if ($configMail['smtp_debug']) echo '<p>Не могу отправить комманду RCPT TO: </p>';
+        fclose($socket);
+        return false;
+    }
+    fputs($socket, "DATA\r\n");
+
+    if (!server_parse($socket, "354", __LINE__)) {
+        if ($configMail['smtp_debug']) echo '<p>Не могу отправить комманду DATA</p>';
+        fclose($socket);
+        return false;
+    }
+    fputs($socket, $SEND."\r\n.\r\n");
+
+    if (!server_parse($socket, "250", __LINE__)) {
+        if ($configMail['smtp_debug']) echo '<p>Не смог отправить тело письма. Письмо не было отправленно!</p>';
+        fclose($socket);
+        return false;
+    }
+    fputs($socket, "QUIT\r\n");
+    fclose($socket);
+    return TRUE;
+}
+
+function server_parse($socket, $response, $line = __LINE__) {
+    global $configMail;
+    while (@substr($server_response, 3, 1) != ' ') {
+        if (!($server_response = fgets($socket, 256))) {
+            if ($configMail['smtp_debug']) echo "<p>Проблемы с отправкой почты!</p>$response<br>$line<br>";
+            return false;
+        }
+    }
+    if (!(substr($server_response, 0, 3) == $response)) {
+        if ($configMail['smtp_debug']) echo "<p>Проблемы с отправкой почты!</p>$response<br>$line<br>";
+        return false;
     }
     return true;
 }
