@@ -84,19 +84,19 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
                             LEFT JOIN spr_users_firms f ON e.user_id = f.user_id
                             WHERE e.is_send = 1 AND u.email IS NOT NULL
                             GROUP BY e.id";
-                $rows = $DB->select($sel);
-                if(isset($rows[0]['email']))
+                $rowsUsers = $DB->select($sel);
+                if(isset($rowsUsers[0]['email']))
                 {
-                    foreach ($rows as $row)
+                    foreach ($rowsUsers as $rowUsers)
                     {
-                        if($row['ar_firms'] != '')
+                        if($rowUsers['ar_firms'] != '')
                         {
-                            $ar_firms = explode(",", $row['ar_firms']);
+                            $ar_firms = explode(",", $rowUsers['ar_firms']);
                             if(in_array($val['firm'], $ar_firms))
-                                smtpmail($row['email'], $row['email'], 'Простой из за неисправности транспортного средства или прицепного оборудования', 'Добрый день.<br>Информирую о простое '.$rows[0]['ts_number'].' из за неисправности техники или прицепного');
+                                smtpmail($rowUsers['email'], $rowUsers['email'], 'Простой из за неисправности транспортного средства или прицепного оборудования', 'Добрый день.<br>Информирую о простое '.$rows[0]['ts_gps_name'].' из за неисправности техники или прицепного');
                         }
                         else
-                            smtpmail($row['email'], $row['email'], 'Простой из за неисправности транспортного средства или прицепного оборудования', 'Добрый день.<br>Информирую о простое '.$rows[0]['ts_number'].' из за неисправности техники или прицепного');
+                            smtpmail($rowUsers['email'], $rowUsers['email'], 'Простой из за неисправности транспортного средства или прицепного оборудования', 'Добрый день.<br>Информирую о простое '.$rows[0]['ts_gps_name'].' из за неисправности техники или прицепного');
                     }
                 }
             }
