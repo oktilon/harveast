@@ -89,14 +89,34 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
                 {
                     foreach ($rowsUsers as $rowUsers)
                     {
+                        $text = 'Добрый день.<br>Информирую о простое '.$rows[0]['ts_gps_name'].' из за неисправности техники или прицепного';
+                        if($rows[0]['note'] != '')
+                        {
+                            $text .= ' ('.$rows[0]['note'].')';
+                        }
+                        if($rows[0]['i157'] != 0 && $rows[0]['i157'] != '')
+                        {
+                            $driver = $DB->select("SELECT * FROM gps_rfid_cards WHERE number = ".$rows[0]['i157']);
+                            if(isset($driver[0]['id']))
+                            {
+                                if($driver[0]['fio'] != '')
+                                {
+                                    $text .= " ".$driver[0]['fio'];
+                                }
+                                if($driver[0]['phone'] != '')
+                                {
+                                    $text .= " ".$driver[0]['phone'];
+                                }
+                            }
+                        }
                         if($rowUsers['ar_firms'] != '')
                         {
                             $ar_firms = explode(",", $rowUsers['ar_firms']);
                             if(in_array($val['firm'], $ar_firms))
-                                smtpmail($rowUsers['email'], $rowUsers['email'], 'Простой из за неисправности транспортного средства или прицепного оборудования', 'Добрый день.<br>Информирую о простое '.$rows[0]['ts_gps_name'].' из за неисправности техники или прицепного');
+                                smtpmail($rowUsers['email'], $rowUsers['email'], 'Простой из за неисправности транспортного средства или прицепного оборудования', $text);
                         }
                         else
-                            smtpmail($rowUsers['email'], $rowUsers['email'], 'Простой из за неисправности транспортного средства или прицепного оборудования', 'Добрый день.<br>Информирую о простое '.$rows[0]['ts_gps_name'].' из за неисправности техники или прицепного');
+                            smtpmail($rowUsers['email'], $rowUsers['email'], 'Простой из за неисправности транспортного средства или прицепного оборудования', $text);
                     }
                 }
             }
@@ -168,7 +188,7 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
 function setReasonNext($dat, $row, $dop = '') {
     global $DB;
     $arg = '';
-    $arg = $DB->select_row("SELECT * FROM gps_car_log_item WHERE log_id = ".$dat['log_id']." AND tm = (".$dat['tm']." + 15) AND ROUND(tm_move / 60, 0) < 4".$dop);
+    $arg = $DB->select_row("SELECT * FROM gps_car_log_item WHERE log_id = ".$dat['log_id']." AND tm = (".$dat['tm']." + 15) AND ROUND(tm_move / 60, 0) <= 5".$dop);
     if(is_array($arg) && isset($arg['id'])) {
         $date = new DateTime();
         $DB->prepare("UPDATE gps_car_log_item SET reason = :r, dt_last = :d WHERE id = :i");
@@ -206,7 +226,7 @@ function setReasonNext($dat, $row, $dop = '') {
 function setReasonPrev($dat, $row) {
     global $DB;
     $arg = '';
-    $arg = $DB->select_row("SELECT * FROM gps_car_log_item WHERE log_id = ".$dat['log_id']." AND tm = (".$dat['tm']." - 15) AND ROUND(tm_move / 60, 0) < 4 AND reason = 0");
+    $arg = $DB->select_row("SELECT * FROM gps_car_log_item WHERE log_id = ".$dat['log_id']." AND tm = (".$dat['tm']." - 15) AND ROUND(tm_move / 60, 0) <= 5 AND reason = 0");
     if(is_array($arg) && isset($arg['id'])) {
         $date = new DateTime();
         $DB->prepare("UPDATE gps_car_log_item SET reason = :r, dt_last = :d WHERE id = :i");
