@@ -5,7 +5,7 @@ date_default_timezone_set('Europe/Kiev');
 $curl = curl_init();
 curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
 curl_setopt_array($curl, array(
-    CURLOPT_URL => 'https://harveast.com.ua/bot/api_ap.php?get=all&key=E1A3332b5t274ga9U793&timefrom='.strtotime("-1 month"),
+    CURLOPT_URL => 'https://harveast.com.ua/bot/api_ap.php?get=all&key=E1A3332b5t274ga9U793&timefrom='.strtotime("-2 days"),
     CURLOPT_CUSTOMREQUEST => "GET",
     CURLOPT_HTTPHEADER => array(
         'cache-control: no-cache',
@@ -92,7 +92,7 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
                 {
                     foreach ($rowsUsers as $rowUsers)
                     {
-                        $text = 'Добрый день.<br>Информирую о простое '.$rows[0]['ts_gps_name'].' из за неисправности техники или прицепного';
+                        $text = 'Добрый день.<br>Данное уведомление отправлено с мобильного приложения.<br>Информирую о простое '.$rows[0]['ts_gps_name'].' из за неисправности техники или прицепного.';
                         if($rows[0]['note'] != '')
                         {
                             $text .= ' ('.$rows[0]['note'].')';
@@ -104,7 +104,7 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
                             {
                                 if($driver[0]['fio'] != '')
                                 {
-                                    $text .= "  механизатор ".$driver[0]['fio'];
+                                    $text .= "  Механизатор ".$driver[0]['fio'];
                                 }
                                 if($driver[0]['phone'] != '')
                                 {
