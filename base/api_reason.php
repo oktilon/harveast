@@ -83,7 +83,7 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
                             FROM spr_users_send_email e
                             JOIN spr_users u ON u.id = e.user_id
                             LEFT JOIN spr_users_firms f ON e.user_id = f.user_id
-                            WHERE e.is_send = 1 AND u.email IS NOT NULL
+                            WHERE e.is_send = 1 AND u.email IS NOT NULL AND u.email != ''
                             GROUP BY e.id";
                 $rowsUsers = $DB->select($sel);
                 file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\nrowsUsers ----- ".print_r($rowsUsers,1), FILE_APPEND);
