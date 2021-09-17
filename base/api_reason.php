@@ -5,7 +5,7 @@ date_default_timezone_set('Europe/Kiev');
 $curl = curl_init();
 curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
 curl_setopt_array($curl, array(
-    CURLOPT_URL => 'https://harveast.com.ua/bot/api_ap.php?get=all&key=E1A3332b5t274ga9U793',
+    CURLOPT_URL => 'https://harveast.com.ua/bot/api_ap.php?get=all&key=E1A3332b5t274ga9U793&timefrom='.strtotime("-1 month"),
     CURLOPT_CUSTOMREQUEST => "GET",
     CURLOPT_HTTPHEADER => array(
         'cache-control: no-cache',
@@ -78,6 +78,7 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
 
             if($val['reason_variant_id'] == 40 && $val['reason_variant_id'] == 41)
             {
+                file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\nval ----- ".print_r($val,1), FILE_APPEND);
                 $sel = "SELECT u.email, GROUP_CONCAT(f.firm_id) AS ar_firms
                             FROM spr_users_send_email e
                             JOIN spr_users u ON u.id = e.user_id
@@ -85,6 +86,8 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
                             WHERE e.is_send = 1 AND u.email IS NOT NULL
                             GROUP BY e.id";
                 $rowsUsers = $DB->select($sel);
+                file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\nrowsUsers ----- ".print_r($rowsUsers,1), FILE_APPEND);
+                file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\nrows ----- ".print_r($rows,1), FILE_APPEND);
                 if(isset($rowsUsers[0]['email']))
                 {
                     foreach ($rowsUsers as $rowUsers)
@@ -96,16 +99,16 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
                         }
                         if($rows[0]['i157'] != 0 && $rows[0]['i157'] != '')
                         {
-                            $driver = $DB->select("SELECT * FROM gps_rfid_cards WHERE number = ".$rows[0]['i157']);
+                            $driver = $DB->select("SELECT * FROM gps_rfid_cards WHERE number = ".$rows[0]['i157']." order by id desc");
                             if(isset($driver[0]['id']))
                             {
                                 if($driver[0]['fio'] != '')
                                 {
-                                    $text .= " ".$driver[0]['fio'];
+                                    $text .= "  механизатор ".$driver[0]['fio'];
                                 }
                                 if($driver[0]['phone'] != '')
                                 {
-                                    $text .= " ".$driver[0]['phone'];
+                                    $text .= " тел ".$driver[0]['phone'];
                                 }
                             }
                         }
@@ -113,10 +116,16 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
                         {
                             $ar_firms = explode(",", $rowUsers['ar_firms']);
                             if(in_array($val['firm'], $ar_firms))
+                            {
+                                file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\nsend email ----- ".print_r($rowUsers['email'],1), FILE_APPEND);
                                 smtpmail($rowUsers['email'], $rowUsers['email'], 'Простой из за неисправности транспортного средства или прицепного оборудования', $text);
+                            }
                         }
                         else
+                        {
                             smtpmail($rowUsers['email'], $rowUsers['email'], 'Простой из за неисправности транспортного средства или прицепного оборудования', $text);
+                            file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\nsend email 2----- ".print_r($rowUsers['email'],1), FILE_APPEND);
+                        }
                     }
                 }
             }
