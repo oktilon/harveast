@@ -112,18 +112,27 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
                                 }
                             }
                         }
+
+                        $configMail['smtp_username'] = 'polomka.techniki@harveast.com';  //Смените на адрес своего почтового ящика.
+                        $configMail['smtp_port'] = '587'; // Порт работы.
+                        $configMail['smtp_host'] =  'mail.harveast.com';  //сервер для отправки почты
+                        $configMail['smtp_password'] = 'OS$H856m0P81Umif729';  //Измените пароль
+                        $configMail['smtp_debug'] = true;  //Если Вы хотите видеть сообщения ошибок, укажите true вместо false
+                        $configMail['smtp_charset'] = 'utf-8';	//кодировка сообщений. (windows-1251 или utf-8, итд)
+                        $configMail['smtp_from'] = 'Agroportal'; //Ваше имя - или имя Вашего сайта. Будет показывать при прочтении в поле "От кого"
+
                         if($rowUsers['ar_firms'] != '')
                         {
                             $ar_firms = explode(",", $rowUsers['ar_firms']);
-                            if(in_array($val['firm'], $ar_firms))
+                            if(in_array($rows[0]['firm'], $ar_firms))
                             {
                                 file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\nsend email ----- ".print_r($rowUsers['email'],1), FILE_APPEND);
-                                smtpmail($rowUsers['email'], $rowUsers['email'], 'Простой из за неисправности транспортного средства или прицепного оборудования', $text);
+                                smtpmail($rowUsers['email'], $rowUsers['email'], 'Простой из за неисправности транспортного средства или прицепного оборудования', $text, $configMail);
                             }
                         }
                         else
                         {
-                            smtpmail($rowUsers['email'], $rowUsers['email'], 'Простой из за неисправности транспортного средства или прицепного оборудования', $text);
+                            smtpmail($rowUsers['email'], $rowUsers['email'], 'Простой из за неисправности транспортного средства или прицепного оборудования', $text, $configMail);
                             file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\nsend email 2----- ".print_r($rowUsers['email'],1), FILE_APPEND);
                         }
                     }
@@ -266,15 +275,7 @@ function setReasonPrev($dat, $row) {
 }
 
 
-$configMail['smtp_username'] = 'polomka.techniki@harveast.com';  //Смените на адрес своего почтового ящика.
-$configMail['smtp_port'] = '587'; // Порт работы.
-$configMail['smtp_host'] =  'mail.harveast.com';  //сервер для отправки почты
-$configMail['smtp_password'] = 'OS$H856m0P81Umif729';  //Измените пароль
-$configMail['smtp_debug'] = true;  //Если Вы хотите видеть сообщения ошибок, укажите true вместо false
-$configMail['smtp_charset'] = 'utf-8';	//кодировка сообщений. (windows-1251 или utf-8, итд)
-$configMail['smtp_from'] = 'Agroportal'; //Ваше имя - или имя Вашего сайта. Будет показывать при прочтении в поле "От кого"
-
-function smtpmail($to='', $mail_to, $subject, $message, $headers='') {
+function smtpmail($to='', $mail_to, $subject, $message, $configMail, $headers='') {
     global $configMail;
     $SEND =	"Date: ".date("D, d M Y H:i:s") . " UT\r\n";
     $SEND .= 'Subject: =?'.$configMail['smtp_charset'].'?B?'.base64_encode($subject)."=?=\r\n";
@@ -295,55 +296,55 @@ function smtpmail($to='', $mail_to, $subject, $message, $headers='') {
         return false;
     }
 
-    if (!server_parse($socket, "220", __LINE__)) return false;
+    if (!server_parse($socket, "220", __LINE__, $configMail)) return false;
 
     fputs($socket, "HELO " . $configMail['smtp_host'] . "\r\n");
-    if (!server_parse($socket, "250", __LINE__)) {
+    if (!server_parse($socket, "250", __LINE__, $configMail)) {
         if ($configMail['smtp_debug']) echo '<p>Не могу отправить HELO!</p>';
         fclose($socket);
         return false;
     }
     fputs($socket, "AUTH LOGIN\r\n");
-    if (!server_parse($socket, "334", __LINE__)) {
+    if (!server_parse($socket, "334", __LINE__, $configMail)) {
         if ($configMail['smtp_debug']) echo '<p>Не могу найти ответ на запрос авторизаци.</p>';
         fclose($socket);
         return false;
     }
     fputs($socket, base64_encode($configMail['smtp_username']) . "\r\n");
-    if (!server_parse($socket, "334", __LINE__)) {
+    if (!server_parse($socket, "334", __LINE__, $configMail)) {
         if ($configMail['smtp_debug']) echo '<p>Логин авторизации не был принят сервером!</p>';
         fclose($socket);
         return false;
     }
     fputs($socket, base64_encode($configMail['smtp_password']) . "\r\n");
-    if (!server_parse($socket, "235", __LINE__)) {
+    if (!server_parse($socket, "235", __LINE__, $configMail)) {
         if ($configMail['smtp_debug']) echo '<p>Пароль не был принят сервером как верный! Ошибка авторизации!</p>';
         fclose($socket);
         return false;
     }
     fputs($socket, "MAIL FROM: <".$configMail['smtp_username'].">\r\n");
-    if (!server_parse($socket, "250", __LINE__)) {
+    if (!server_parse($socket, "250", __LINE__, $configMail)) {
         if ($configMail['smtp_debug']) echo '<p>Не могу отправить комманду MAIL FROM: </p>';
         fclose($socket);
         return false;
     }
     fputs($socket, "RCPT TO: <" . $mail_to . ">\r\n");
 
-    if (!server_parse($socket, "250", __LINE__)) {
+    if (!server_parse($socket, "250", __LINE__, $configMail)) {
         if ($configMail['smtp_debug']) echo '<p>Не могу отправить комманду RCPT TO: </p>';
         fclose($socket);
         return false;
     }
     fputs($socket, "DATA\r\n");
 
-    if (!server_parse($socket, "354", __LINE__)) {
+    if (!server_parse($socket, "354", __LINE__, $configMail)) {
         if ($configMail['smtp_debug']) echo '<p>Не могу отправить комманду DATA</p>';
         fclose($socket);
         return false;
     }
     fputs($socket, $SEND."\r\n.\r\n");
 
-    if (!server_parse($socket, "250", __LINE__)) {
+    if (!server_parse($socket, "250", __LINE__, $configMail)) {
         if ($configMail['smtp_debug']) echo '<p>Не смог отправить тело письма. Письмо не было отправленно!</p>';
         fclose($socket);
         return false;
@@ -353,7 +354,7 @@ function smtpmail($to='', $mail_to, $subject, $message, $headers='') {
     return TRUE;
 }
 
-function server_parse($socket, $response, $line = __LINE__) {
+function server_parse($socket, $response, $line = __LINE__, $configMail) {
     global $configMail;
     while (@substr($server_response, 3, 1) != ' ') {
         if (!($server_response = fgets($socket, 256))) {
