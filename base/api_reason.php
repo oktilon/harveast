@@ -76,7 +76,7 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
                     where id = ".$rows[0]['id'];
             $log = $DB->select($sel);
 
-            if(($val['reason_variant_id'] == 40 || $val['reason_variant_id'] == 41) && ($rows[0]['reason'] == 0 || $rows[0]['reason'] == $val['reason_variant_id']))
+            /*if(($val['reason_variant_id'] == 40 || $val['reason_variant_id'] == 41) && ($rows[0]['reason'] == 0 || $rows[0]['reason'] == $val['reason_variant_id']))
             {
                 //file_put_contents("/var/www/html/public/base/rez_api_".date("Y-m-d").".txt", "\nval ----- ".print_r($val,1), FILE_APPEND);
                 $sel = "SELECT u.email, GROUP_CONCAT(f.firm_id) AS ar_firms
@@ -137,7 +137,7 @@ if(isset($response['reasons_list']) && is_array($response['reasons_list']) && co
                         }
                     }
                 }
-            }
+            }*/
 
             $reas = $DB->select_row("SELECT * FROM gps_car_reasons WHERE car_id = ".$rows[0]['car_id']." AND gps_car_log_item_id = ".$rows[0]['id']." AND tm = ".$gpsCarLogItemTm);
             if(!isset($reas['id'])) {
