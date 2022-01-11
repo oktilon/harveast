@@ -422,4 +422,8 @@ class connect_db {
         }
         return $ret;
     }
+
+    public function execute_column($column_idx = 0, $default = []) {
+        return $this->execute_all(PDO::FETCH_COLUMN, $default, intval($column_idx));
+    }
 }
