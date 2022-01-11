@@ -86,7 +86,15 @@ try {
                         Info("Eval joint:{$oj->id} reason: " . OrderJoint::$recalcReason);
                         $oj->evalJointArea(0);
                         $oj->setRecalc(false);
-                        file_put_contents("/var/www/html/public/base/eval_joint_log.txt", "\n\n\n\n\n".print_r($oj, 1), FILE_APPEND);
+                        if(isset($oj->list) && count($oj->list) > 0)
+                        {
+                            foreach ($oj->list as $item)
+                            {
+                                $orderLogRez = OrderLog::checkNotGpsWorking($item);
+                                if($orderLogRez)
+                                    $oj->area = $orderLogRez;
+                            }
+                        }
                         $oj->save();
                     }
                 }
