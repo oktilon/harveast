@@ -73,12 +73,12 @@ try {
                 $oj = OrderJoint::checkJoint($ojo);
                 if($oj->id < 0) {
                     $msg = sprintf("%d-%d [%s - %s] (%d) DB error : %s",
-                                $oj->geo,
-                                $oj->techop,
-                                $oj->d_beg->format('Y-m-d H:i:s'),
-                                $oj->d_end->format('Y-m-d H:i:s'),
-                                OrderJoint::$total,
-                                $DB->error
+                                   $oj->geo,
+                                   $oj->techop,
+                                   $oj->d_beg->format('Y-m-d H:i:s'),
+                                   $oj->d_end->format('Y-m-d H:i:s'),
+                                   OrderJoint::$total,
+                                   $DB->error
                     );
                     Info($msg);
                 } else {
@@ -86,23 +86,6 @@ try {
                         Info("Eval joint:{$oj->id} reason: " . OrderJoint::$recalcReason);
                         $oj->evalJointArea(0);
                         $oj->setRecalc(false);
-                        if(isset($oj->list) && count($oj->list) > 0)
-                        {
-                            foreach ($oj->list as $item)
-                            {
-                                $orderLogRez = OrderLog::checkNotGpsWorking($item);
-                                if($orderLogRez)
-                                {
-                                    $oj->area += $orderLogRez;
-                                    $orderLog = OrderLog::get($item->id);
-                                    if($orderLog->id != 0)
-                                    {
-                                        $orderLog->jnt_area = $orderLogRez;
-                                        $orderLog->save(false);
-                                    }
-                                }
-                            }
-                        }
                         $oj->save();
                     }
                 }
