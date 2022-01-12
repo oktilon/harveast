@@ -92,7 +92,15 @@ try {
                             {
                                 $orderLogRez = OrderLog::checkNotGpsWorking($item);
                                 if($orderLogRez)
-                                    $oj->area = $orderLogRez;
+                                {
+                                    $oj->area += $orderLogRez;
+                                    $orderLog = OrderLog::get($item->id);
+                                    if($orderLog->id != 0)
+                                    {
+                                        $orderLog->jnt_area = $orderLogRez;
+                                        $orderLog->save(false);
+                                    }
+                                }
                             }
                         }
                         $oj->save();
