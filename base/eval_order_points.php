@@ -112,18 +112,32 @@ try {
 
     foreach($messages as $msg) {
         $ok = CarLogPoint::calcPoint($msg, $iid);
-        $dbl_track_radius = $DB->prepare("SELECT id, radius FROM dbl_track_radius WHERE techops_id = ".$ord->tech_op->id)->execute_row();
+        file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nord ----- ".print_r($ord, 1), FILE_APPEND);
+/*        $dbl_track_radius = $DB->prepare("SELECT id, radius FROM dbl_track_radius WHERE techops_id = ".$ord->tech_op->id)->execute_row();
         if(isset($dbl_track_radius['id']))
         {
-            $st_astext = $PG->prepare("SELECT st_astext(st_envelope(st_buffer(st_point(".str_replace(",",".",$msg->pos->x).", ".str_replace(",",".",$msg->pos->y).")::geography, 25)::geometry)) AS p")->execute_row();
+            $x = str_replace(",",".",$msg->pos->x);
+            $y = str_replace(",",".",$msg->pos->y);
+            $st_astext = $PG->prepare("SELECT st_astext(st_envelope(st_buffer(st_point(".$x.", ".$y.")::geography, 25)::geometry)) AS p")->execute_row();
             if(isset($st_astext['p']))
             {
                 $st_astext['p'] = str_replace("POLYGON((", "", $st_astext['p']);
                 $st_astext['p'] = str_replace("))", "", $st_astext['p']);
                 $st_astext = explode(",", $st_astext['p']);
+                $pMin = explode(" ", $st_astext[0]);
+                $pMax = explode(" ", $st_astext[2]);
                 file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nst_astext ----- ".print_r($st_astext, 1), FILE_APPEND);
+                $st_astext = $PG->prepare("SELECT *
+                                                FROM (SELECT *
+                                                        FROM gps_points 
+                                                        WHERE id=966
+                                                            AND ST_X(pt) BETWEEN ".$pMin[0]." AND ".$pMax[0]."
+                                                            AND ST_Y(pt) BETWEEN ".$pMin[1]." AND ".$pMax[2]."
+                                                            AND dt BETWEEN 1634560167 AND 1634569167) AS sub
+                                                WHERE ST_DWithin(sub.pt::geography, ST_GeogFromText('POINT (".$x." ".$y.")'), 25, false);")->execute_row();
+
             }
-        }
+        }*/
         if($ok) echo CarLogPoint::$last_gid ? 'o' : '.';
     }
     $ord->updateCheckPoints(true);
