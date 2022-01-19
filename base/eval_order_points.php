@@ -112,11 +112,13 @@ try {
 
     foreach($messages as $msg) {
         $ok = CarLogPoint::calcPoint($msg, $iid);
-        $dbl_track_radius = $DB->prepare("SELECT id, radius FROM dbl_track_radius WHERE techops_id = $ord->tech_op->id")->execute_row();
+        file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nok ----- ".print_r($ok, 1), FILE_APPEND);
+        $dbl_track_radius = $DB->prepare("SELECT id, radius FROM dbl_track_radius WHERE techops_id = ".$ord->tech_op->id)->execute_row();
+        file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\ndbl_track_radius ----- ".print_r($dbl_track_radius, 1), FILE_APPEND);
         if(isset($dbl_track_radius['id']))
         {
             $st_astext = $DB->prepare("SELECT st_astext(st_envelope(st_buffer(st_point(".str_replace(",",".",$msg->pos->x).", ".str_replace(",",".",$msg->pos->y).")::geography, 25)::geometry)) AS p")->execute_row();
-            file_put_contents("/var/www/html/public/base/point_".date("Y-m-d").".txt", "\nst_astext ----- ".print_r($st_astext, 1), FILE_APPEND);
+            file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nst_astext ----- ".print_r($st_astext, 1), FILE_APPEND);
         }
         if($ok) echo CarLogPoint::$last_gid ? 'o' : '.';
     }
