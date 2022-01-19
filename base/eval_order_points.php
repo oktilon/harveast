@@ -112,8 +112,9 @@ try {
 
     foreach($messages as $msg) {
         $ok = CarLogPoint::calcPoint($msg, $iid);
-        file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nord ----- ".print_r($ord, 1), FILE_APPEND);
-/*        $dbl_track_radius = $DB->prepare("SELECT id, radius FROM dbl_track_radius WHERE techops_id = ".$ord->tech_op->id)->execute_row();
+        //file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nord ----- ".print_r($ord, 1), FILE_APPEND);
+
+        $dbl_track_radius = $DB->prepare("SELECT id, radius FROM dbl_track_radius WHERE techops_id = ".$ord->tech_op->id)->execute_row();
         if(isset($dbl_track_radius['id']))
         {
             $x = str_replace(",",".",$msg->pos->x);
@@ -126,18 +127,25 @@ try {
                 $st_astext = explode(",", $st_astext['p']);
                 $pMin = explode(" ", $st_astext[0]);
                 $pMax = explode(" ", $st_astext[2]);
-                file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nst_astext ----- ".print_r($st_astext, 1), FILE_APPEND);
-                $st_astext = $PG->prepare("SELECT *
+                file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nsql ----- ".print_r("SELECT *
                                                 FROM (SELECT *
                                                         FROM gps_points 
                                                         WHERE id=966
                                                             AND ST_X(pt) BETWEEN ".$pMin[0]." AND ".$pMax[0]."
                                                             AND ST_Y(pt) BETWEEN ".$pMin[1]." AND ".$pMax[2]."
-                                                            AND dt BETWEEN 1634560167 AND 1634569167) AS sub
-                                                WHERE ST_DWithin(sub.pt::geography, ST_GeogFromText('POINT (".$x." ".$y.")'), 25, false);")->execute_row();
+                                                            AND dt BETWEEN ".strtotime($ord->d_beg->format('Y-m-d H:i:s'))." AND ".strtotime($ord->d_end->format('Y-m-d H:i:s')).") AS sub
+                                                WHERE ST_DWithin(sub.pt::geography, ST_GeogFromText('POINT (".$x." ".$y.")'), ".$dbl_track_radius['radius'].", false);", 1), FILE_APPEND);
+                /*$st_astext = $PG->prepare("SELECT *
+                                                FROM (SELECT *
+                                                        FROM gps_points 
+                                                        WHERE id=966
+                                                            AND ST_X(pt) BETWEEN ".$pMin[0]." AND ".$pMax[0]."
+                                                            AND ST_Y(pt) BETWEEN ".$pMin[1]." AND ".$pMax[2]."
+                                                            AND dt BETWEEN ".strtotime($ord->d_beg->format('Y-m-d H:i:s'))." AND ".strtotime($ord->d_end->format('Y-m-d H:i:s')).") AS sub
+                                                WHERE ST_DWithin(sub.pt::geography, ST_GeogFromText('POINT (".$x." ".$y.")'), ".$dbl_track_radius['radius'].", false);")->execute_all();*/
 
             }
-        }*/
+        }
         if($ok) echo CarLogPoint::$last_gid ? 'o' : '.';
     }
     $ord->updateCheckPoints(true);
