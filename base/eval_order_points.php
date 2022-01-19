@@ -132,7 +132,7 @@ try {
                                                         FROM gps_points 
                                                         WHERE id=966
                                                             AND ST_X(pt) BETWEEN ".$pMin[0]." AND ".$pMax[0]."
-                                                            AND ST_Y(pt) BETWEEN ".$pMin[1]." AND ".$pMax[2]."
+                                                            AND ST_Y(pt) BETWEEN ".$pMin[1]." AND ".$pMax[1]."
                                                             AND dt BETWEEN ".strtotime($ord->d_beg->format('Y-m-d H:i:s'))." AND ".strtotime($ord->d_end->format('Y-m-d H:i:s')).") AS sub
                                                 WHERE ST_DWithin(sub.pt::geography, ST_GeogFromText('POINT (".$x." ".$y.")'), ".$dbl_track_radius['radius'].", false);", 1), FILE_APPEND);
                 /*$st_astext = $PG->prepare("SELECT *
