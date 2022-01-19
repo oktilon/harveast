@@ -112,14 +112,16 @@ try {
 
     foreach($messages as $msg) {
         $ok = CarLogPoint::calcPoint($msg, $iid);
-        //file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nord ----- ".print_r($ord, 1), FILE_APPEND);
+        file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\ntBeg ----- ".print_r($tBeg, 1), FILE_APPEND);
+        file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nmsg ----- ".print_r($msg, 1), FILE_APPEND);
 
         $dbl_track_radius = $DB->prepare("SELECT id, radius FROM dbl_track_radius WHERE techops_id = ".$ord->tech_op->id)->execute_row();
         if(isset($dbl_track_radius['id']))
         {
             $x = str_replace(",",".",$msg->pos->x);
             $y = str_replace(",",".",$msg->pos->y);
-            $st_astext = $PG->prepare("SELECT st_astext(st_envelope(st_buffer(st_point(".$x.", ".$y.")::geography, 25)::geometry)) AS p")->execute_row();
+            $st_astext = $PG->prepare("SELECT st_astext(st_envelope(st_buffer(st_point(".$x.", ".$y.")::geography, ".$dbl_track_radius['radius'].")::geometry)) AS p")->execute_row();
+            file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nst_astext ----- ".print_r($st_astext, 1), FILE_APPEND);
             if(isset($st_astext['p']))
             {
                 $st_astext['p'] = str_replace("POLYGON((", "", $st_astext['p']);
@@ -129,11 +131,11 @@ try {
                 $pMax = explode(" ", $st_astext[2]);
                 file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nsql ----- ".print_r("SELECT *
                                                 FROM (SELECT *
-                                                        FROM gps_points 
-                                                        WHERE id=966
+                                                        FROM harveast.gps_points 
+                                                        WHERE id=".$iid."
                                                             AND ST_X(pt) BETWEEN ".$pMin[0]." AND ".$pMax[0]."
                                                             AND ST_Y(pt) BETWEEN ".$pMin[1]." AND ".$pMax[1]."
-                                                            AND dt BETWEEN ".strtotime($ord->d_beg->format('Y-m-d H:i:s'))." AND ".strtotime($ord->d_end->format('Y-m-d H:i:s')).") AS sub
+                                                            AND dt BETWEEN ".$tBeg." AND ".$tEnd.") AS sub
                                                 WHERE ST_DWithin(sub.pt::geography, ST_GeogFromText('POINT (".$x." ".$y.")'), ".$dbl_track_radius['radius'].", false);", 1), FILE_APPEND);
                 /*$st_astext = $PG->prepare("SELECT *
                                                 FROM (SELECT *
