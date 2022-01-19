@@ -112,6 +112,11 @@ try {
 
     foreach($messages as $msg) {
         $ok = CarLogPoint::calcPoint($msg, $iid);
+        file_put_contents("/var/www/html/public/base/point_".date("Y-m-d")."_".$iid.".txt", "\nord ----- ".print_r($ord, 1), FILE_APPEND);
+        //$ord->id;
+        //SELECT  st_astext(st_envelope(st_buffer(st_point(31.093555, 50.4350049)::geography, 25)::geometry)) AS p
+            //$ok_m = $DB->prepare("UPDATE gps_geofence SET del=1 WHERE id IN($ids)")->execute() ? 'ok' : $DB->error;
+            //$ok_p = $PG->prepare("UPDATE geofences SET del=1 WHERE _id IN($ids)")->execute() ? 'ok' : $PG->error;
         if($ok) echo CarLogPoint::$last_gid ? 'o' : '.';
     }
     $ord->updateCheckPoints(true);
