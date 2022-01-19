@@ -67,11 +67,9 @@ try {
     $orders = WorkOrder::getList($flt, 'd_beg, car');
 
     if (!$orders) {
-        file_put_contents("/var/www/html/public/base/point_".date("Y-m-d").".txt", "\nNo orders to recalc ----- ", FILE_APPEND);
         Info('No orders to recalc');
         die();
     }
-    file_put_contents("/var/www/html/public/base/point_".date("Y-m-d").".txt", "\norders ----- ".print_r($orders, 1), FILE_APPEND);
 
     $ord_cnt = count($orders);
     Info("Orders to recalc $ord_cnt");
@@ -114,11 +112,12 @@ try {
 
     foreach($messages as $msg) {
         $ok = CarLogPoint::calcPoint($msg, $iid);
-        file_put_contents("/var/www/html/public/base/point_".date("Y-m-d").".txt", "\nord ----- ".print_r($ord, 1), FILE_APPEND);
-        //$ord->id;
-        //SELECT  st_astext(st_envelope(st_buffer(st_point(31.093555, 50.4350049)::geography, 25)::geometry)) AS p
-            //$ok_m = $DB->prepare("UPDATE gps_geofence SET del=1 WHERE id IN($ids)")->execute() ? 'ok' : $DB->error;
-            //$ok_p = $PG->prepare("UPDATE geofences SET del=1 WHERE _id IN($ids)")->execute() ? 'ok' : $PG->error;
+        $dbl_track_radius = $DB->prepare("SELECT id, radius FROM dbl_track_radius WHERE techops_id = $ord->tech_op->id")->execute_one();
+        if(isset($dbl_track_radius['id']))
+        {
+            $st_astext = $DB->prepare("SELECT st_astext(st_envelope(st_buffer(st_point(".str_replace(",",".",$msg->pos->x).", ".str_replace(",",".",$msg->pos->y).")::geography, 25)::geometry)) AS p")->execute_one();
+            file_put_contents("/var/www/html/public/base/point_".date("Y-m-d").".txt", "\nst_astext ----- ".print_r($st_astext, 1), FILE_APPEND);
+        }
         if($ok) echo CarLogPoint::$last_gid ? 'o' : '.';
     }
     $ord->updateCheckPoints(true);
