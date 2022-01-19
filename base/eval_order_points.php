@@ -67,9 +67,11 @@ try {
     $orders = WorkOrder::getList($flt, 'd_beg, car');
 
     if (!$orders) {
+        file_put_contents("/var/www/html/public/base/point_".date("Y-m-d").".txt", "\nNo orders to recalc ----- ", FILE_APPEND);
         Info('No orders to recalc');
         die();
     }
+    file_put_contents("/var/www/html/public/base/point_".date("Y-m-d").".txt", "\norders ----- ".print_r($orders, 1), FILE_APPEND);
 
     $ord_cnt = count($orders);
     Info("Orders to recalc $ord_cnt");
@@ -112,7 +114,7 @@ try {
 
     foreach($messages as $msg) {
         $ok = CarLogPoint::calcPoint($msg, $iid);
-        file_put_contents("/var/www/html/public/base/point_".date("Y-m-d")."_".$iid.".txt", "\nord ----- ".print_r($ord, 1), FILE_APPEND);
+        file_put_contents("/var/www/html/public/base/point_".date("Y-m-d").".txt", "\nord ----- ".print_r($ord, 1), FILE_APPEND);
         //$ord->id;
         //SELECT  st_astext(st_envelope(st_buffer(st_point(31.093555, 50.4350049)::geography, 25)::geometry)) AS p
             //$ok_m = $DB->prepare("UPDATE gps_geofence SET del=1 WHERE id IN($ids)")->execute() ? 'ok' : $DB->error;
