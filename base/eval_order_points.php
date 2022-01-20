@@ -112,8 +112,6 @@ try {
 
     foreach($messages as $msg) {
         $ok = CarLogPoint::calcPoint($msg, $iid);
-        file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\ntBeg ----- ".print_r($tBeg, 1), FILE_APPEND);
-        file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nmsg ----- ".print_r($msg, 1), FILE_APPEND);
 
         $dbl_track_radius = $DB->prepare("SELECT id, radius FROM dbl_track_radius WHERE techops_id = ".$ord->tech_op->id)->execute_row();
         if(isset($dbl_track_radius['id']))
@@ -124,27 +122,70 @@ try {
             file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nst_astext ----- ".print_r($st_astext, 1), FILE_APPEND);
             if(isset($st_astext['p']))
             {
+                file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nord ----- ".print_r($ord, 1), FILE_APPEND);
+                file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\ntBeg ----- ".print_r($tBeg, 1), FILE_APPEND);
+                file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nmsg ----- ".print_r($msg, 1), FILE_APPEND);
                 $st_astext['p'] = str_replace("POLYGON((", "", $st_astext['p']);
                 $st_astext['p'] = str_replace("))", "", $st_astext['p']);
                 $st_astext = explode(",", $st_astext['p']);
                 $pMin = explode(" ", $st_astext[0]);
                 $pMax = explode(" ", $st_astext[2]);
-                file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nsql ----- ".print_r("SELECT *
+
+                $st_astext = $PG->prepare("SELECT *
                                                 FROM (SELECT *
                                                         FROM harveast.gps_points 
                                                         WHERE id=".$iid."
                                                             AND ST_X(pt) BETWEEN ".$pMin[0]." AND ".$pMax[0]."
                                                             AND ST_Y(pt) BETWEEN ".$pMin[1]." AND ".$pMax[1]."
-                                                            AND dt BETWEEN ".$tBeg." AND ".$tEnd.") AS sub
-                                                WHERE ST_DWithin(sub.pt::geography, ST_GeogFromText('POINT (".$x." ".$y.")'), ".$dbl_track_radius['radius'].", false);", 1), FILE_APPEND);
-                /*$st_astext = $PG->prepare("SELECT *
+                                                            AND dt BETWEEN ".$tBeg." AND ".$tEnd."
+                                                            and dt not BETWEEN (".$msg->t."-5*60) and (".$msg->t."+5*60) 
+                                                            and spd > 0 and geo_id != 0) AS sub
+                                                WHERE ST_DWithin(sub.pt::geography, ST_GeogFromText('POINT (".$x." ".$y.")'), ".$dbl_track_radius['radius'].", false);")->execute_all();
+                $lst = GeoFence::findPointFieldFast($msg->pos);
+                $gid = $lst ? array_shift($lst) : 0;
+                if(isset($dblPoint[0]['id']) && $gid != 0 && $msg->pos->s != 0)
+                {
+                    file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nsql ----- ".print_r("SELECT *
                                                 FROM (SELECT *
-                                                        FROM gps_points 
-                                                        WHERE id=966
+                                                        FROM harveast.gps_points 
+                                                        WHERE id=".$iid."
                                                             AND ST_X(pt) BETWEEN ".$pMin[0]." AND ".$pMax[0]."
-                                                            AND ST_Y(pt) BETWEEN ".$pMin[1]." AND ".$pMax[2]."
-                                                            AND dt BETWEEN ".strtotime($ord->d_beg->format('Y-m-d H:i:s'))." AND ".strtotime($ord->d_end->format('Y-m-d H:i:s')).") AS sub
-                                                WHERE ST_DWithin(sub.pt::geography, ST_GeogFromText('POINT (".$x." ".$y.")'), ".$dbl_track_radius['radius'].", false);")->execute_all();*/
+                                                            AND ST_Y(pt) BETWEEN ".$pMin[1]." AND ".$pMax[1]."
+                                                            AND dt BETWEEN ".$tBeg." AND ".$tEnd."
+                                                            and dt not BETWEEN (".$msg->t."-5*60) and (".$msg->t."+5*60) 
+                                                            and spd > 0 and geo_id != 0) AS sub
+                                                WHERE ST_DWithin(sub.pt::geography, ST_GeogFromText('POINT (".$x." ".$y.")'), ".$dbl_track_radius['radius'].", false);", 1), FILE_APPEND);
+                    $DB->prepare("INSERT INTO dbl_gps_points
+                            (ord_id, dt, geo_id, spd, ang, pt, mv)
+                            VALUES (:id, :dt, :gid, :spd, :ang, ST_GeomFromText(:pt), :mv)")
+                       ->bind('id', $oid)
+                       ->bind('dt', $msg->t)
+                       ->bind('gid', $gid)
+                       ->bind('spd', $msg->pos->s)
+                       ->bind('ang', $msg->pos->c)
+                       ->bind('mv', $msg->pos->s)
+                       ->execute();
+                    $dblPointNotFinish = $DB->prepare("SELECT * FROM dbl_gps_points where ord_id = :id AND finish = 0;")
+                                            ->bind('id', $oid)
+                                            ->execute_all();
+                    if(isset($dblPointNotFinish[0]['id']))
+                    {
+                        if(($msg->t - $dblPointNotFinish[0]['dt']) > (60*5))
+                        {
+                            $DB->prepare("UPDATE dbl_gps_points SET finish = 1
+                            WHERE ord_id = :id AND finish = 0")
+                               ->bind('id', $oid)
+                               ->execute();
+                        }
+                    }
+                }
+                else
+                {
+                    $DB->prepare("DELETE FROM dbl_gps_points
+                            WHERE ord_id = :id AND finish = 0")
+                       ->bind('id', $oid)
+                       ->execute();
+                }
 
             }
         }
