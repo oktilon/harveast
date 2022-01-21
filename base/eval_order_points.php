@@ -119,12 +119,12 @@ try {
             $x = str_replace(",",".",$msg->pos->x);
             $y = str_replace(",",".",$msg->pos->y);
             $st_astext = $PG->prepare("SELECT st_astext(st_envelope(st_buffer(st_point(".$x.", ".$y.")::geography, ".$dbl_track_radius['radius'].")::geometry)) AS p")->execute_row();
-            file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nst_astext ----- ".print_r($st_astext, 1), FILE_APPEND);
+            //file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nst_astext ----- ".print_r($st_astext, 1), FILE_APPEND);
             if(isset($st_astext['p']))
             {
-                file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nord ----- ".print_r($ord, 1), FILE_APPEND);
-                file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\ntBeg ----- ".print_r($tBeg, 1), FILE_APPEND);
-                file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nmsg ----- ".print_r($msg, 1), FILE_APPEND);
+                //file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nord ----- ".print_r($ord, 1), FILE_APPEND);
+                //file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\ntBeg ----- ".print_r($tBeg, 1), FILE_APPEND);
+                //file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nmsg ----- ".print_r($msg, 1), FILE_APPEND);
                 $st_astext['p'] = str_replace("POLYGON((", "", $st_astext['p']);
                 $st_astext['p'] = str_replace("))", "", $st_astext['p']);
                 $st_astext = explode(",", $st_astext['p']);
@@ -141,8 +141,11 @@ try {
                                                             and dt not BETWEEN (".$msg->t."-5*60) and (".$msg->t."+5*60) 
                                                             and spd > 0 and geo_id != 0) AS sub
                                                 WHERE ST_DWithin(sub.pt::geography, ST_GeogFromText('POINT (".$x." ".$y.")'), ".$dbl_track_radius['radius'].", false);")->execute_all();
+                file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nst_astext ----- ".print_r($st_astext, 1), FILE_APPEND);
                 $lst = GeoFence::findPointFieldFast($msg->pos);
+                file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nlst ----- ".print_r($lst, 1), FILE_APPEND);
                 $gid = $lst ? array_shift($lst) : 0;
+                file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\ngid ----- ".print_r($gid, 1), FILE_APPEND);
                 if(isset($dblPoint[0]['id']) && $gid != 0 && $msg->pos->s != 0)
                 {
                     file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nsql ----- ".print_r("SELECT *
