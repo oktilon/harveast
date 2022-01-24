@@ -146,7 +146,7 @@ try {
                 file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nlst ----- ".print_r($lst, 1), FILE_APPEND);
                 $gid = $lst ? array_shift($lst) : 0;
                 file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\ngid ----- ".print_r($gid, 1), FILE_APPEND);
-                if(isset($dblPoint[0]['id']) && $gid != 0 && $msg->pos->s != 0)
+                if(isset($st_astext[0]['id']) && $gid != 0 && $msg->pos->s != 0)
                 {
                     file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nsql ----- ".print_r("SELECT *
                                                 FROM (SELECT *
@@ -167,7 +167,9 @@ try {
                        ->bind('spd', $msg->pos->s)
                        ->bind('ang', $msg->pos->c)
                        ->bind('mv', $msg->pos->s)
-                       ->execute();
+                        ->bind('pt', $msg->pos->getWkt());
+                    file_put_contents("/var/www/html/public/base/point_".$oid."_".date("Y-m-d").".txt", "\nDB ----- ".print_r($DB, 1), FILE_APPEND);
+                    $DB->execute();
                     $dblPointNotFinish = $DB->prepare("SELECT * FROM dbl_gps_points where ord_id = :id AND finish = 0;")
                                             ->bind('id', $oid)
                                             ->execute_all();
